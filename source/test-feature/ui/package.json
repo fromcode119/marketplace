@@ -1,0 +1,12 @@
+{
+  "name": "@fromcode-plugin/test-feature-ui",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/index.jsx --bundle --format=esm --outfile=index.js --external:react --external:react-dom --external:lucide-react --jsx=automatic",
+    "watch": "npm run build -- --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

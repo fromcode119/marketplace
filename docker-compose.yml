@@ -1,0 +1,27 @@
+# docker-compose.yml
+# Based on framework-plan.md Section 12.2
+
+services:
+  # ===================
+  # Plugin Registry
+  # ===================
+  registry:
+    build:
+      context: ./
+    volumes:
+      - ./:/usr/share/nginx/html
+    networks:
+      framework:
+        aliases:
+          - registry.framework.local
+      public:
+    restart: unless-stopped
+
+networks:
+  framework:
+  public:
+    external: true
+    name: web
+
+volumes:
+  postgres_data:
