@@ -1,0 +1,42 @@
+{
+  "slug": "modern-slate",
+  "name": "Modern Slate Theme",
+  "version": "1.0.1",
+  "description": "A professional theme with localized layouts and plugin slots.",
+  "author": "Fromcode Team",
+  "layouts": [
+    { "name": "frontend.layout.main", "label": "Full Modern Layout" }
+  ],
+  "slots": [
+    "theme.modern.header.after",
+    "theme.modern.footer.before"
+  ],
+  "dependencies": {
+    "test-feature": "^1.0.0"
+  },
+  "variables": {
+    "primary": "#6366f1",
+    "bg-main": "#f8fafc",
+    "font-heading": "Inter, sans-serif"
+  },
+  "ui": {
+    "entry": "index.js"
+  },
+  "iconUrl": "https://cdn-icons-png.flaticon.com/512/9093/9093061.png",
+  "screenshots": [
+    "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-155768224-5b8590cb3855?q=80&w=800&auto=format&fit=crop"
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-01-26",
+      "changes": [
+        "Modern slate aesthetic",
+        "Inter font integration",
+        "Plugin slot architecture ready"
+      ]
+    }
+  ]
+}
