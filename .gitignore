@@ -11,6 +11,9 @@ plugins/*.tar.gz
 themes/*.zip
 themes/*.tar.gz
 !themes/.keep
+core/*.zip
+core/*.tar.gz
+!core/.keep
 registry.json
 
 # Local env files

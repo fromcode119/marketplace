@@ -5,7 +5,7 @@ const Banner = () => {
 
   useEffect(() => {
     // In a real setup, we might use an SDK or a relative path handled by proxy
-    fetch('http://api.framework.local/api/hello')
+    fetch('http://api.fromcode.local/api/hello')
       .then(res => res.json())
       .then(setData)
       .catch(err => console.error("Banner fetch failed", err));

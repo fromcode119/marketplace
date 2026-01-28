@@ -13,7 +13,7 @@ services:
     networks:
       framework:
         aliases:
-          - registry.framework.local
+          - registry.fromcode.local
       public:
     restart: unless-stopped
 

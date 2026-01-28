@@ -10,10 +10,69 @@ REGISTRY_FILE="$REGISTRY_DIR/registry.json"
 mkdir -p "$OUTPUT_DIR"
 
 # Initialize registry JSON structure
-echo '{"version": "1.0.0", "lastUpdated": "", "plugins": [], "themes": []}' > "$REGISTRY_FILE"
+echo '{"version": "1.0.0", "lastUpdated": "", "core": null, "plugins": [], "themes": []}' > "$REGISTRY_FILE"
 # Set current timestamp
 last_updated=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 jq --arg date "$last_updated" '.lastUpdated = $date' "$REGISTRY_FILE" > "${REGISTRY_FILE}.tmp" && cat "${REGISTRY_FILE}.tmp" > "$REGISTRY_FILE" && rm "${REGISTRY_FILE}.tmp"
+
+# --- SYNC CORE SOURCE ---
+CORE_REPO_URL="https://github.com/fromcode119/framework"
+CORE_SOURCE_DIR="$SOURCE_DIR/core"
+mkdir -p "$SOURCE_DIR"
+
+if [ ! -d "$CORE_SOURCE_DIR/.git" ]; then
+    echo "Cloning Core repository from $CORE_REPO_URL..."
+    # If the directory exists but is not a git repo, remove it
+    [ -d "$CORE_SOURCE_DIR" ] && rm -rf "$CORE_SOURCE_DIR"
+    git clone "$CORE_REPO_URL" "$CORE_SOURCE_DIR"
+else
+    echo "Updating Core repository and fetching tags..."
+    (cd "$CORE_SOURCE_DIR" && git fetch --all --tags && git pull)
+fi
+
+# Determine the version to pack (prefer latest tag, fall back to package.json)
+latest_tag=$(cd "$CORE_SOURCE_DIR" && git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null)
+
+if [ -n "$latest_tag" ]; then
+    echo "Latest tag found: $latest_tag. Checking out $latest_tag..."
+    (cd "$CORE_SOURCE_DIR" && git checkout "$latest_tag")
+else
+    echo "No tags found. Using current branch state."
+fi
+
+# --- PACK CORE ---
+CORE_OUTPUT_DIR="$REGISTRY_DIR/core"
+mkdir -p "$CORE_OUTPUT_DIR"
+
+if [ -d "$CORE_SOURCE_DIR" ]; then
+    core_package_json="$CORE_SOURCE_DIR/package.json"
+    if [ -f "$core_package_json" ]; then
+        version=$(jq -r '.version' "$core_package_json")
+        output_name="fromcode-core-${version}.zip"
+        download_url="./core/$output_name"
+        
+        echo "Packing Core v$version..."
+        # Pack only essential system files: packages, root configs, and docker setup
+        # Excludes docs, starters, and development noise
+        (cd "$CORE_SOURCE_DIR" && zip -ro "$CORE_OUTPUT_DIR/$output_name" \
+            packages/ \
+            package.json \
+            package-lock.json \
+            tsconfig.json \
+            Dockerfile \
+            docker-compose.yml \
+            .dockerignore \
+            -x "*.git*" "*/node_modules/*" "*/.next/*" "*.env*" "*.log*" "*/backups/*" "*/public/uploads/*")
+        
+        jq --arg version "$version" \
+           --arg url "$download_url" \
+           --arg date "$last_updated" \
+           '.core = {version: $version, downloadUrl: $url, lastUpdated: $date}' \
+           "$REGISTRY_FILE" > "${REGISTRY_FILE}.tmp" && cat "${REGISTRY_FILE}.tmp" > "$REGISTRY_FILE" && rm "${REGISTRY_FILE}.tmp"
+        
+        echo "Success: Core v$version added to registry."
+    fi
+fi
 
 # --- PACK PLUGINS ---
 for plugin_path in "$SOURCE_DIR"/*; do

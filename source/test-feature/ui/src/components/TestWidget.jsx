@@ -4,7 +4,7 @@ import { Puzzle } from 'lucide-react';
 export function TestWidget() {
   const [data, setData] = useState(null);
   const { t, locale, FROMCODE_API_URL } = window.Fromcode || {};
-  const apiUrl = FROMCODE_API_URL || 'http://api.framework.local';
+  const apiUrl = FROMCODE_API_URL || 'http://api.fromcode.local';
 
   useEffect(() => {
     const fetchUrl = `${apiUrl}/api/test-feature/api/hello?locale=${locale || 'en'}`;
