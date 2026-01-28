@@ -7,8 +7,9 @@
   "homepage": "https://github.com/bonbonche/framework",
   "iconUrl": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/puzzle.svg",
   "screenshots": [
-    "https://payloadcms.com/images/home/feature-rich-ui.webp",
-    "https://payloadcms.com/images/home/api-first.webp"
+    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1551033406-611cf9a28f67?q=80&w=800&auto=format&fit=crop"
   ],
   "changelog": [
     "Enhanced marketplace integration with expanded details",
@@ -19,6 +20,7 @@
   "category": "testing",
   "main": "index.js",
   "capabilities": ["api", "admin", "frontend", "database:read", "database:write", "hooks", "i18n", "content"],
+  "permissions": [],
   "admin": {
     "slots": [
       {

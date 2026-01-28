@@ -8,6 +8,9 @@ dist/
 plugins/*.zip
 plugins/*.tar.gz
 !plugins/.keep
+themes/*.zip
+themes/*.tar.gz
+!themes/.keep
 registry.json
 
 # Local env files
