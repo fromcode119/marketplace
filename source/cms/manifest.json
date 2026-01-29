@@ -30,5 +30,60 @@
     "networking",
     "backups"
   ],
-  "permissions": []
+  "permissions": [],
+  "admin": {
+    "group": "Content",
+    "icon": "LayoutTemplate",
+    "slots": [
+      {
+        "slot": "admin.dashboard.widgets",
+        "component": "CMSDashboard",
+        "priority": 5
+      },
+      {
+        "slot": "admin.plugin.cms.content",
+        "component": "CMSDashboard",
+        "priority": 10
+      }
+    ],
+    "menu": [
+      {
+        "label": "Blog Posts",
+        "path": "/posts",
+        "icon": "FileText",
+        "group": "Content"
+      },
+      {
+        "label": "Pages",
+        "path": "/pages",
+        "icon": "Layers",
+        "group": "Content"
+      },
+      {
+        "label": "Categories",
+        "path": "/categories",
+        "icon": "Tag",
+        "group": "Content"
+      }
+    ],
+    "management": {
+      "settings": [
+        {
+          "name": "enable_drafts",
+          "label": "Enable Drafts by Default",
+          "type": "boolean",
+          "defaultValue": true
+        },
+        {
+          "name": "auto_generate_excerpts",
+          "label": "Auto-generate Excerpts",
+          "type": "boolean",
+          "defaultValue": true
+        }
+      ]
+    }
+  },
+  "ui": {
+    "entry": "index.js"
+  }
 }
