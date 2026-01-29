@@ -25,14 +25,17 @@ mkdir -p "$SOURCE_DIR"
 if [ -d "$LOCAL_FRAMEWORK_DIR" ]; then
     echo "Syncing Core from local framework source..."
     mkdir -p "$CORE_SOURCE_DIR"
-    rsync -av --exclude 'node_modules' --exclude '.next' --exclude 'dist' "$LOCAL_FRAMEWORK_DIR/" "$CORE_SOURCE_DIR/"
+    # Exclude .git to prevent checkout conflicts with local changes
+    rsync -av --exclude '.git' --exclude 'node_modules' --exclude '.next' --exclude 'dist' "$LOCAL_FRAMEWORK_DIR/" "$CORE_SOURCE_DIR/"
     
     # Sync Themes from framework to registry source
     if [ -d "$LOCAL_FRAMEWORK_DIR/themes" ]; then
         echo "Syncing Themes from local framework source..."
         mkdir -p "$SOURCE_DIR/themes"
-        rsync -av --exclude 'node_modules' --exclude 'dist' "$LOCAL_FRAMEWORK_DIR/themes/" "$SOURCE_DIR/themes/"
+        rsync -av --exclude '.git' --exclude 'node_modules' --exclude 'dist' "$LOCAL_FRAMEWORK_DIR/themes/" "$SOURCE_DIR/themes/"
     fi
+    # Set a flag to skip git checkout later
+    IS_LOCAL_SYNC=true
 else
     if [ ! -d "$CORE_SOURCE_DIR/.git" ]; then
         echo "Cloning Core repository from $CORE_REPO_URL..."
@@ -45,14 +48,18 @@ else
     fi
 fi
 
-# Determine the version to pack (prefer latest tag, fall back to package.json)
-latest_tag=$(cd "$CORE_SOURCE_DIR" && git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null)
+if [ "$IS_LOCAL_SYNC" != true ]; then
+    # Determine the version to pack (prefer latest tag, fall back to package.json)
+    latest_tag=$(cd "$CORE_SOURCE_DIR" && git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null)
 
-if [ -n "$latest_tag" ]; then
-    echo "Latest tag found: $latest_tag. Checking out $latest_tag..."
-    (cd "$CORE_SOURCE_DIR" && git checkout "$latest_tag")
+    if [ -n "$latest_tag" ]; then
+        echo "Latest tag found: $latest_tag. Checking out $latest_tag..."
+        (cd "$CORE_SOURCE_DIR" && git checkout "$latest_tag")
+    else
+        echo "No tags found. Using current branch state."
+    fi
 else
-    echo "No tags found. Using current branch state."
+    echo "Local sync detected. Using current workspace files (skipping git checkout)."
 fi
 
 # --- PREPARE CLI FOR BUILDING ---
@@ -122,7 +129,7 @@ for plugin_path in "$SOURCE_DIR"/*; do
             echo "Building and packing plugin $plugin_slug v$version from $(basename "$plugin_path")..."
             
             # Build the plugin UI assets on the fly
-            (cd "$SOURCE_DIR" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" plugin build "$plugin_slug")
+            (cd "$plugin_path" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" plugin build "$plugin_slug")
             
             # Create zip
             (cd "$plugin_path" && zip -r "$OUTPUT_DIR/$output_name" .)
@@ -201,7 +208,7 @@ if [ -d "$THEMES_SOURCE_DIR" ]; then
                 echo "Building and packing theme $theme_slug v$version..."
                 
                 # Build the theme UI assets on the fly
-                (cd "$SOURCE_DIR" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" theme build "$theme_slug")
+                (cd "$theme_path" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" theme build "$theme_slug")
                 
                 # Create zip
                 (cd "$theme_path" && zip -r "$THEMES_OUTPUT_DIR/$output_name" .)
@@ -244,6 +251,13 @@ if [ -d "$THEMES_SOURCE_DIR" ]; then
             fi
         fi
     done
+fi
+
+# --- CLEANUP ---
+# Remove the core source directory after packing is complete to save space
+if [ -d "$CORE_SOURCE_DIR" ]; then
+    echo "Cleaning up temporary core source..."
+    rm -rf "$CORE_SOURCE_DIR"
 fi
 
 echo "Registry packing and metadata update complete."
