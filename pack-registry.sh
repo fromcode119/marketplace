@@ -17,17 +17,32 @@ jq --arg date "$last_updated" '.lastUpdated = $date' "$REGISTRY_FILE" > "${REGIS
 
 # --- SYNC CORE SOURCE ---
 CORE_REPO_URL="https://github.com/fromcode119/framework"
+# LOCAL_FRAMEWORK_DIR refers to the sibling directory in the workspace
+LOCAL_FRAMEWORK_DIR="$(cd "$REGISTRY_DIR/../../framework/Source" &> /dev/null && pwd)"
 CORE_SOURCE_DIR="$SOURCE_DIR/core"
 mkdir -p "$SOURCE_DIR"
 
-if [ ! -d "$CORE_SOURCE_DIR/.git" ]; then
-    echo "Cloning Core repository from $CORE_REPO_URL..."
-    # If the directory exists but is not a git repo, remove it
-    [ -d "$CORE_SOURCE_DIR" ] && rm -rf "$CORE_SOURCE_DIR"
-    git clone "$CORE_REPO_URL" "$CORE_SOURCE_DIR"
+if [ -d "$LOCAL_FRAMEWORK_DIR" ]; then
+    echo "Syncing Core from local framework source..."
+    mkdir -p "$CORE_SOURCE_DIR"
+    rsync -av --exclude 'node_modules' --exclude '.next' --exclude 'dist' "$LOCAL_FRAMEWORK_DIR/" "$CORE_SOURCE_DIR/"
+    
+    # Sync Themes from framework to registry source
+    if [ -d "$LOCAL_FRAMEWORK_DIR/themes" ]; then
+        echo "Syncing Themes from local framework source..."
+        mkdir -p "$SOURCE_DIR/themes"
+        rsync -av --exclude 'node_modules' --exclude 'dist' "$LOCAL_FRAMEWORK_DIR/themes/" "$SOURCE_DIR/themes/"
+    fi
 else
-    echo "Updating Core repository and fetching tags..."
-    (cd "$CORE_SOURCE_DIR" && git fetch --all --tags && git pull)
+    if [ ! -d "$CORE_SOURCE_DIR/.git" ]; then
+        echo "Cloning Core repository from $CORE_REPO_URL..."
+        # If the directory exists but is not a git repo, remove it
+        [ -d "$CORE_SOURCE_DIR" ] && rm -rf "$CORE_SOURCE_DIR"
+        git clone "$CORE_REPO_URL" "$CORE_SOURCE_DIR"
+    else
+        echo "Updating Core repository and fetching tags..."
+        (cd "$CORE_SOURCE_DIR" && git fetch --all --tags && git pull)
+    fi
 fi
 
 # Determine the version to pack (prefer latest tag, fall back to package.json)
@@ -38,6 +53,14 @@ if [ -n "$latest_tag" ]; then
     (cd "$CORE_SOURCE_DIR" && git checkout "$latest_tag")
 else
     echo "No tags found. Using current branch state."
+fi
+
+# --- PREPARE CLI FOR BUILDING ---
+# We need the CLI to build themes and plugins on the fly
+CLI_PATH="$CORE_SOURCE_DIR/packages/cli"
+if [ -d "$CLI_PATH" ]; then
+    echo "Preparing Fromcode CLI for registry builds..."
+    (cd "$CORE_SOURCE_DIR" && npm install --quiet && npm run build --workspace=@fromcode/cli)
 fi
 
 # --- PACK CORE ---
@@ -96,7 +119,10 @@ for plugin_path in "$SOURCE_DIR"/*; do
             output_name="${plugin_slug}-${version}.zip"
             download_url="./plugins/$output_name"
             
-            echo "Packing plugin $plugin_slug v$version from $(basename "$plugin_path")..."
+            echo "Building and packing plugin $plugin_slug v$version from $(basename "$plugin_path")..."
+            
+            # Build the plugin UI assets on the fly
+            (cd "$SOURCE_DIR" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" plugin build "$plugin_slug")
             
             # Create zip
             (cd "$plugin_path" && zip -r "$OUTPUT_DIR/$output_name" .)
@@ -172,7 +198,10 @@ if [ -d "$THEMES_SOURCE_DIR" ]; then
                 output_name="${theme_slug}-${version}.zip"
                 download_url="./themes/$output_name"
                 
-                echo "Packing theme $theme_slug v$version..."
+                echo "Building and packing theme $theme_slug v$version..."
+                
+                # Build the theme UI assets on the fly
+                (cd "$SOURCE_DIR" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" theme build "$theme_slug")
                 
                 # Create zip
                 (cd "$theme_path" && zip -r "$THEMES_OUTPUT_DIR/$output_name" .)

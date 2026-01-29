@@ -1,0 +1,21 @@
+{
+  "slug": "minimal-blue",
+  "name": "Minimal Blue",
+  "version": "1.0.0",
+  "author": "Unknown",
+  "variables": {
+    "primary": "#3b82f6",
+    "secondary": "#1e293b",
+    "background": "#ffffff",
+    "foreground": "#0f172a"
+  },
+  "ui": {
+    "entry": "bundle.js",
+    "styles": [
+      "theme.css"
+    ]
+  },
+  "layouts": {
+    "default": "./layouts/MainLayout"
+  }
+}
