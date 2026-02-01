@@ -1,0 +1,19 @@
+/* Emerald Night Theme Styles */
+:root {
+  --primary: #10b981;
+  --background: #022c22;
+  --foreground: #ecfdf5;
+  --border: #065f46;
+}
+
+body.emerald-dark-mode {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.emerald-card {
+  background: rgba(6, 78, 59, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}

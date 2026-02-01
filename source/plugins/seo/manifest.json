@@ -1,0 +1,16 @@
+{
+  "slug": "seo",
+  "name": "SEO Extension",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "Advanced SEO management for Fromcode CMS. Adds metadata fields to Pages and Posts automatically.",
+  "author": "Fromcode Core",
+  "capabilities": ["hooks", "database"],
+  "dependencies": {
+    "cms": "^1.3.3"
+  },
+  "admin": {
+    "group": "System",
+    "icon": "Search"
+  }
+}

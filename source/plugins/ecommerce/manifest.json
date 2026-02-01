@@ -1,0 +1,38 @@
+{
+  "slug": "ecommerce",
+  "name": "E-commerce Suite",
+  "version": "1.0.0",
+  "description": "Professional catalog, order management, and payment processing.",
+  "author": "Fromcode Core",
+  "homepage": "https://fromcode.com",
+  "category": "business",
+  "iconUrl": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/shopping-cart.svg",
+  "capabilities": ["database:write", "api", "hooks"],
+  "admin": {
+    "group": "E-commerce",
+    "icon": "ShoppingBag",
+    "menu": [
+      {
+        "label": "Store Overview",
+        "path": "/plugins/ecommerce",
+        "icon": "LayoutDashboard",
+        "priority": 1
+      },
+      {
+        "label": "Products",
+        "path": "/plugins/ecommerce/products",
+        "icon": "Package",
+        "priority": 2
+      },
+      {
+        "label": "Orders",
+        "path": "/plugins/ecommerce/orders",
+        "icon": "CreditCard",
+        "priority": 3
+      }
+    ],
+    "slots": {
+      "admin.plugin.ecommerce.content": "admin.plugin.ecommerce.dashboard"
+    }
+  }
+}

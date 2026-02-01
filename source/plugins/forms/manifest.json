@@ -1,0 +1,31 @@
+{
+  "slug": "forms",
+  "name": "Forms & Submissions",
+  "version": "1.0.0",
+  "description": "Powerful lead capture and form building. Create dynamic forms and manage user submissions centrally.",
+  "author": "Fromcode Core",
+  "homepage": "https://fromcode.com",
+  "category": "marketing",
+  "iconUrl": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/clipboard-list.svg",
+  "admin": {
+    "group": "Marketing",
+    "icon": "MessageSquare",
+    "menu": [
+      {
+        "label": "Form Inbox",
+        "path": "/plugins/forms",
+        "icon": "Inbox",
+        "priority": 1
+      },
+      {
+        "label": "Manage Forms",
+        "path": "/plugins/forms/list",
+        "icon": "ClipboardList",
+        "priority": 2
+      }
+    ],
+    "slots": {
+      "admin.plugin.forms.content": "admin.plugin.forms.dashboard"
+    }
+  }
+}

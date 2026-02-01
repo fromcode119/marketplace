@@ -1,0 +1,31 @@
+{
+  "slug": "search",
+  "name": "Intelligent Search",
+  "version": "1.0.0",
+  "description": "Cross-collection search engine. Unified endpoint for site-wide content discovery.",
+  "author": "Fromcode Core",
+  "homepage": "https://fromcode.com",
+  "category": "productivity",
+  "iconUrl": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/search.svg",
+  "admin": {
+    "group": "Intelligence",
+    "icon": "Search",
+    "menu": [
+      {
+        "label": "Search Insights",
+        "path": "/plugins/search",
+        "icon": "TrendingUp",
+        "priority": 1
+      },
+      {
+        "label": "Indexing Status",
+        "path": "/plugins/search/status",
+        "icon": "Activity",
+        "priority": 2
+      }
+    ],
+    "slots": {
+      "admin.plugin.search.content": "admin.plugin.search.dashboard"
+    }
+  }
+}

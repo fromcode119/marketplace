@@ -1,0 +1,81 @@
+{
+  "slug": "test-feature",
+  "name": "Test Feature Plugin",
+  "version": "1.0.11",
+  "description": "A comprehensive test plugin for framework capabilities, now with correct Lucide v0.563+ icon names.",
+  "author": "Fromcode Team",
+  "homepage": "https://github.com/bonbonche/framework",
+  "iconUrl": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/puzzle.svg",
+  "screenshots": [
+    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1551033406-611cf9a28f67?q=80&w=800&auto=format&fit=crop"
+  ],
+  "changelog": [
+    "Enhanced marketplace integration with expanded details",
+    "Verified toggle endpoint stability",
+    "Finalized cross-package naming standards",
+    "Fixed Lucide-React icon names for v0.563+"
+  ],
+  "category": "testing",
+  "main": "index.js",
+  "capabilities": ["api", "admin", "frontend", "database:read", "database:write", "hooks", "i18n", "content"],
+  "permissions": [],
+  "admin": {
+    "slots": [
+      {
+        "slot": "admin.dashboard.widgets",
+        "component": "DashboardWidget",
+        "priority": 10
+      },
+      {
+        "slot": "admin.plugin.test-feature.content",
+        "component": "PluginPage",
+        "priority": 10
+      }
+    ],
+    "menu": [
+      {
+        "label": "Ads Performance",
+        "path": "/marketing/ads",
+        "icon": "TrendingUp",
+        "group": "Advertising",
+        "children": [
+            { "label": "Social Campaigns", "path": "/marketing/campaigns" },
+            { "label": "Google Ads", "path": "/marketing/google" }
+        ]
+      },
+      {
+        "label": "Audit Logs",
+        "path": "/security/audit",
+        "icon": "ShieldCheck",
+        "group": "Security"
+      },
+      {
+        "label": "Analytics",
+        "path": "/other/analytics",
+        "icon": "ChartNoAxesColumn",
+        "group": "Resources"
+      }
+    ],
+    "management": {
+      "settings": [
+        {
+          "name": "api_key",
+          "label": "External API Key",
+          "type": "text",
+          "description": "Used to communicate with the test service"
+        },
+        {
+          "name": "enable_logs",
+          "label": "Enable Verbose Logging",
+          "type": "boolean",
+          "defaultValue": true
+        }
+      ]
+    }
+  },
+  "ui": {
+    "entry": "bundle.js"
+  }
+}

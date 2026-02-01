@@ -7,6 +7,18 @@ SOURCE_DIR="$REGISTRY_DIR/source"
 OUTPUT_DIR="$REGISTRY_DIR/plugins"
 REGISTRY_FILE="$REGISTRY_DIR/registry.json"
 
+# --- TRANSLATIONS (EN) ---
+T_CORE_PACKING="Packing Core v%s..."
+T_CORE_SUCCESS="Success: Core v%s added to registry."
+T_PLUGIN_BUILDING="Building and packing plugin %s v%s from %s..."
+T_PLUGIN_SUCCESS="Success: %s added to registry."
+T_PLUGIN_NO_MANIFEST="Warning: No manifest found for %s, skipping."
+T_THEME_BUILDING="Building and packing theme %s v%s..."
+T_THEME_SUCCESS="Success: %s added to registry."
+T_CLI_NO_ENTRY="No entry point found in %s (index.ts/js)"
+T_FINAL_CLEANUP="Final cleanup of build artifacts..."
+T_COMPLETE="Registry packing and metadata update complete."
+
 mkdir -p "$OUTPUT_DIR"
 
 # Initialize registry JSON structure
@@ -17,49 +29,17 @@ jq --arg date "$last_updated" '.lastUpdated = $date' "$REGISTRY_FILE" > "${REGIS
 
 # --- SYNC CORE SOURCE ---
 CORE_REPO_URL="https://github.com/fromcode119/framework"
-# LOCAL_FRAMEWORK_DIR refers to the sibling directory in the workspace
-LOCAL_FRAMEWORK_DIR="$(cd "$REGISTRY_DIR/../../framework/Source" &> /dev/null && pwd)"
 CORE_SOURCE_DIR="$SOURCE_DIR/core"
 mkdir -p "$SOURCE_DIR"
 
-if [ -d "$LOCAL_FRAMEWORK_DIR" ]; then
-    echo "Syncing Core from local framework source..."
-    mkdir -p "$CORE_SOURCE_DIR"
-    # Exclude .git to prevent checkout conflicts with local changes
-    rsync -av --exclude '.git' --exclude 'node_modules' --exclude '.next' --exclude 'dist' "$LOCAL_FRAMEWORK_DIR/" "$CORE_SOURCE_DIR/"
-    
-    # Sync Themes from framework to registry source
-    if [ -d "$LOCAL_FRAMEWORK_DIR/themes" ]; then
-        echo "Syncing Themes from local framework source..."
-        mkdir -p "$SOURCE_DIR/themes"
-        rsync -av --exclude '.git' --exclude 'node_modules' --exclude 'dist' "$LOCAL_FRAMEWORK_DIR/themes/" "$SOURCE_DIR/themes/"
-    fi
-    # Set a flag to skip git checkout later
-    IS_LOCAL_SYNC=true
+# Clone the repository if it doesn't exist
+if [ ! -d "$CORE_SOURCE_DIR/.git" ]; then
+    echo "Cloning Core repository (main branch)..."
+    [ -d "$CORE_SOURCE_DIR" ] && rm -rf "$CORE_SOURCE_DIR"
+    git clone --depth 1 "$CORE_REPO_URL" "$CORE_SOURCE_DIR"
 else
-    if [ ! -d "$CORE_SOURCE_DIR/.git" ]; then
-        echo "Cloning Core repository from $CORE_REPO_URL..."
-        # If the directory exists but is not a git repo, remove it
-        [ -d "$CORE_SOURCE_DIR" ] && rm -rf "$CORE_SOURCE_DIR"
-        git clone "$CORE_REPO_URL" "$CORE_SOURCE_DIR"
-    else
-        echo "Updating Core repository and fetching tags..."
-        (cd "$CORE_SOURCE_DIR" && git fetch --all --tags && git pull)
-    fi
-fi
-
-if [ "$IS_LOCAL_SYNC" != true ]; then
-    # Determine the version to pack (prefer latest tag, fall back to package.json)
-    latest_tag=$(cd "$CORE_SOURCE_DIR" && git describe --tags $(git rev-list --tags --max-count=1) 2>/dev/null)
-
-    if [ -n "$latest_tag" ]; then
-        echo "Latest tag found: $latest_tag. Checking out $latest_tag..."
-        (cd "$CORE_SOURCE_DIR" && git checkout "$latest_tag")
-    else
-        echo "No tags found. Using current branch state."
-    fi
-else
-    echo "Local sync detected. Using current workspace files (skipping git checkout)."
+    echo "Updating Core repository..."
+    (cd "$CORE_SOURCE_DIR" && git pull)
 fi
 
 # --- PREPARE CLI FOR BUILDING ---
@@ -67,6 +47,7 @@ fi
 CLI_PATH="$CORE_SOURCE_DIR/packages/cli"
 if [ -d "$CLI_PATH" ]; then
     echo "Preparing Fromcode CLI for registry builds..."
+    
     (cd "$CORE_SOURCE_DIR" && npm install --quiet && npm run build --workspace=@fromcode/cli)
 fi
 
@@ -81,7 +62,7 @@ if [ -d "$CORE_SOURCE_DIR" ]; then
         output_name="fromcode-core-${version}.zip"
         download_url="./core/$output_name"
         
-        echo "Packing Core v$version..."
+        printf "$T_CORE_PACKING\n" "$version"
         # Pack only essential system files: packages, root configs, and docker setup
         # Excludes docs, starters, and development noise
         (cd "$CORE_SOURCE_DIR" && zip -ro "$CORE_OUTPUT_DIR/$output_name" \
@@ -100,13 +81,14 @@ if [ -d "$CORE_SOURCE_DIR" ]; then
            '.core = {version: $version, downloadUrl: $url, lastUpdated: $date}' \
            "$REGISTRY_FILE" > "${REGISTRY_FILE}.tmp" && cat "${REGISTRY_FILE}.tmp" > "$REGISTRY_FILE" && rm "${REGISTRY_FILE}.tmp"
         
-        echo "Success: Core v$version added to registry."
+        printf "$T_CORE_SUCCESS\n" "$version"
     fi
 fi
 
 # --- PACK PLUGINS ---
-for plugin_path in "$SOURCE_DIR"/*; do
-    if [ -d "$plugin_path" ] && [ "$(basename "$plugin_path")" != "themes" ]; then
+PLUGINS_SOURCE_DIR="$SOURCE_DIR/plugins"
+for plugin_path in "$PLUGINS_SOURCE_DIR"/*; do
+    if [ -d "$plugin_path" ]; then
         manifest_file="$plugin_path/manifest.json"
         
         # Determine manifest file
@@ -126,13 +108,37 @@ for plugin_path in "$SOURCE_DIR"/*; do
             output_name="${plugin_slug}-${version}.zip"
             download_url="./plugins/$output_name"
             
-            echo "Building and packing plugin $plugin_slug v$version from $(basename "$plugin_path")..."
+            printf "$T_PLUGIN_BUILDING\n" "$plugin_slug" "$version" "$(basename "$plugin_path")"
             
-            # Build the plugin UI assets on the fly
-            (cd "$plugin_path" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" plugin build "$plugin_slug")
+            # 1. Build the plugin UI assets (bundle.js) using the CLI
+            (cd "$SOURCE_DIR" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" plugin build "$plugin_slug")
             
-            # Create zip
-            (cd "$plugin_path" && zip -r "$OUTPUT_DIR/$output_name" .)
+            # 2. Build the plugin backend if index.ts exists
+            if [ -f "$plugin_path/index.ts" ]; then
+                echo "Compiling backend for $plugin_slug..."
+                (cd "$plugin_path" && npx -p typescript tsc index.ts --esModuleInterop --skipLibCheck --target ESNext --module CommonJS --outDir .)
+            fi
+
+            # Create zip, EXCLUDING dev junk
+            TMP_ZIP_DIR=$(mktemp -d)
+            cp -R "$plugin_path/" "$TMP_ZIP_DIR/"
+            
+            # Clean up before zipping: remove junk but KEEP compiled index.js
+            find "$TMP_ZIP_DIR" -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null
+            find "$TMP_ZIP_DIR" -type d -name ".next" -exec rm -rf {} + 2>/dev/null
+            find "$TMP_ZIP_DIR" -type d -name ".git" -exec rm -rf {} + 2>/dev/null
+            
+            # Remove source files and maps from the package
+            find "$TMP_ZIP_DIR" -type f -name "*.ts" -delete 2>/dev/null
+            find "$TMP_ZIP_DIR" -type f -name "*.tsx" -delete 2>/dev/null
+            find "$TMP_ZIP_DIR" -type f -name "*.js.map" -delete 2>/dev/null
+            find "$TMP_ZIP_DIR" -type f -name "tsconfig.json" -delete 2>/dev/null
+            rm -rf "$TMP_ZIP_DIR/ui/src" "$TMP_ZIP_DIR/ui/package.json" "$TMP_ZIP_DIR/ui/package-lock.json" 2>/dev/null
+
+            rm -f "$OUTPUT_DIR/$output_name"
+            # Final safety: use zip exclusions as well
+            (cd "$TMP_ZIP_DIR" && zip -rq "$OUTPUT_DIR/$output_name" . -x "*/node_modules/*" "*/.next/*" "*/.git/*" "*.log" ".DS_Store" "*.ts" "*.tsx" "*.map")
+            rm -rf "$TMP_ZIP_DIR"
             
             # Update registry.json with this plugin's metadata
             jq --arg slug "$plugin_slug" \
@@ -178,9 +184,9 @@ for plugin_path in "$SOURCE_DIR"/*; do
                    "$REGISTRY_FILE" > "${REGISTRY_FILE}.tmp" && cat "${REGISTRY_FILE}.tmp" > "$REGISTRY_FILE" && rm "${REGISTRY_FILE}.tmp"
             fi
             
-            echo "Success: $output_name added to registry."
+            printf "$T_PLUGIN_SUCCESS\n" "$output_name"
         else
-            echo "Warning: No manifest found for $plugin_slug, skipping."
+            printf "$T_PLUGIN_NO_MANIFEST\n" "$plugin_slug"
         fi
     fi
 done
@@ -205,13 +211,32 @@ if [ -d "$THEMES_SOURCE_DIR" ]; then
                 output_name="${theme_slug}-${version}.zip"
                 download_url="./themes/$output_name"
                 
-                echo "Building and packing theme $theme_slug v$version..."
+                printf "$T_THEME_BUILDING\n" "$theme_slug" "$version"
                 
                 # Build the theme UI assets on the fly
                 (cd "$theme_path" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" theme build "$theme_slug")
                 
-                # Create zip
-                (cd "$theme_path" && zip -r "$THEMES_OUTPUT_DIR/$output_name" .)
+                # Create zip, EXCLUDING dev junk
+                TMP_ZIP_DIR=$(mktemp -d)
+                cp -R "$theme_path/" "$TMP_ZIP_DIR/"
+                
+                # Clean up before zipping
+                find "$TMP_ZIP_DIR" -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null
+                find "$TMP_ZIP_DIR" -type d -name ".git" -exec rm -rf {} + 2>/dev/null
+                
+                # Remove source files and maps from the package
+                find "$TMP_ZIP_DIR" -type f -name "*.ts" -delete 2>/dev/null
+                find "$TMP_ZIP_DIR" -type f -name "*.tsx" -delete 2>/dev/null
+                find "$TMP_ZIP_DIR" -type f -name "*.js.map" -delete 2>/dev/null
+                find "$TMP_ZIP_DIR" -type f -name "tsconfig.json" -delete 2>/dev/null
+                rm -rf "$TMP_ZIP_DIR/ui/src" "$TMP_ZIP_DIR/ui/package.json" "$TMP_ZIP_DIR/ui/package-lock.json" 2>/dev/null
+
+                rm -f "$THEMES_OUTPUT_DIR/$output_name"
+                # Final safety: use zip exclusions as well
+                (cd "$TMP_ZIP_DIR" && zip -rq "$THEMES_OUTPUT_DIR/$output_name" . -x "*/node_modules/*" "*/.git/*" "*.log" ".DS_Store" "*.ts" "*.tsx" "*.map")
+                rm -rf "$TMP_ZIP_DIR"
+                
+                # Update registry.json with this theme's metadata
                 
                 # Update registry.json with this theme's metadata
                 jq --arg slug "$theme_slug" \
@@ -247,7 +272,7 @@ if [ -d "$THEMES_SOURCE_DIR" ]; then
                        "$REGISTRY_FILE" > "${REGISTRY_FILE}.tmp" && cat "${REGISTRY_FILE}.tmp" > "$REGISTRY_FILE" && rm "${REGISTRY_FILE}.tmp"
                 fi
 
-                echo "Success: $output_name added to registry."
+                printf "$T_THEME_SUCCESS\n" "$output_name"
             fi
         fi
     done
@@ -260,4 +285,13 @@ if [ -d "$CORE_SOURCE_DIR" ]; then
     rm -rf "$CORE_SOURCE_DIR"
 fi
 
-echo "Registry packing and metadata update complete."
+# Clean up plugin/theme build artifacts from source to keep registry repo clean
+printf "$T_FINAL_CLEANUP\n"
+find "$SOURCE_DIR" -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null
+find "$SOURCE_DIR" -type d -name "dist" -exec rm -rf {} + 2>/dev/null
+find "$SOURCE_DIR" -type f -name "bundle.js" -delete 2>/dev/null
+find "$SOURCE_DIR" -type f -name "bundle.js.map" -delete 2>/dev/null
+# Remove compiled JS files if TS equivalent exists
+find "$SOURCE_DIR" -type f -name "*.js" -not -path "*/node_modules/*" -exec sh -c 'for f; do [ -f "${f%.js}.ts" ] && rm -f "$f"; done' sh {} +
+
+printf "$T_COMPLETE\n"

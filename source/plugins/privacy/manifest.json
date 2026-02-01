@@ -1,0 +1,32 @@
+{
+  "slug": "privacy",
+  "name": "Privacy & GDPR",
+  "version": "1.0.0",
+  "description": "Cookie consent management and GDPR compliance tools.",
+  "author": "Fromcode Core",
+  "homepage": "https://fromcode.com",
+  "category": "legal",
+  "iconUrl": "https://raw.githubusercontent.com/lucide-react/lucide/main/icons/shield-check.svg",
+  "capabilities": ["database:write", "api", "hooks"],
+  "admin": {
+    "group": "Legal",
+    "icon": "ShieldCheck",
+    "menu": [
+      {
+        "label": "Compliance Dashboard",
+        "path": "/plugins/privacy",
+        "icon": "Gavel",
+        "priority": 1
+      },
+      {
+        "label": "Consent Logs",
+        "path": "/plugins/privacy/logs",
+        "icon": "History",
+        "priority": 2
+      }
+    ],
+    "slots": {
+      "admin.plugin.privacy.content": "admin.plugin.privacy.dashboard"
+    }
+  }
+}
