@@ -4,28 +4,50 @@
 
 REGISTRY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 SOURCE_DIR="$REGISTRY_DIR/source"
+SOURCES_FILE="$REGISTRY_DIR/sources.json"
 OUTPUT_DIR="$REGISTRY_DIR/plugins"
 REGISTRY_FILE="$REGISTRY_DIR/registry.json"
 
 # --- TRANSLATIONS (EN) ---
 T_CORE_PACKING="Packing Core v%s..."
 T_CORE_SUCCESS="Success: Core v%s added to registry."
-T_PLUGIN_BUILDING="Building and packing plugin %s v%s from %s..."
+T_PLUGIN_BUILDING="Building and packing plugin %s v%s from Git..."
 T_PLUGIN_SUCCESS="Success: %s added to registry."
 T_PLUGIN_NO_MANIFEST="Warning: No manifest found for %s, skipping."
-T_THEME_BUILDING="Building and packing theme %s v%s..."
+T_THEME_BUILDING="Building and packing theme %s v%s from Git..."
 T_THEME_SUCCESS="Success: %s added to registry."
+T_EXTENSION_SYNC="Syncing %s from %s (%s)..."
 T_CLI_NO_ENTRY="No entry point found in %s (index.ts/js)"
 T_FINAL_CLEANUP="Final cleanup of build artifacts..."
 T_COMPLETE="Registry packing and metadata update complete."
 
 mkdir -p "$OUTPUT_DIR"
+mkdir -p "$SOURCE_DIR/plugins"
+mkdir -p "$SOURCE_DIR/themes"
 
 # Initialize registry JSON structure
 echo '{"version": "1.0.0", "lastUpdated": "", "core": null, "plugins": [], "themes": []}' > "$REGISTRY_FILE"
 # Set current timestamp
 last_updated=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 jq --arg date "$last_updated" '.lastUpdated = $date' "$REGISTRY_FILE" > "${REGISTRY_FILE}.tmp" && cat "${REGISTRY_FILE}.tmp" > "$REGISTRY_FILE" && rm "${REGISTRY_FILE}.tmp"
+
+# --- HELPERS ---
+sync_extension() {
+    local type=$1 # plugins or themes
+    local slug=$2
+    local url=$3
+    local branch=$4
+    local target_dir="$SOURCE_DIR/$type/$slug"
+
+    printf "$T_EXTENSION_SYNC\n" "$slug" "$url" "$branch"
+
+    if [ ! -d "$target_dir/.git" ]; then
+        rm -rf "$target_dir"
+        git clone --depth 1 --branch "$branch" "$url" "$target_dir"
+    else
+        (cd "$target_dir" && git fetch origin "$branch" && git reset --hard "origin/$branch")
+    fi
+}
 
 # --- SYNC CORE SOURCE ---
 CORE_REPO_URL="https://github.com/fromcode119/framework"
@@ -86,8 +108,15 @@ if [ -d "$CORE_SOURCE_DIR" ]; then
 fi
 
 # --- PACK PLUGINS ---
-PLUGINS_SOURCE_DIR="$SOURCE_DIR/plugins"
-for plugin_path in "$PLUGINS_SOURCE_DIR"/*; do
+num_plugins=$(jq '.plugins | length' "$SOURCES_FILE")
+for (( i=0; i<$num_plugins; i++ )); do
+    plugin_slug=$(jq -r ".plugins[$i].slug" "$SOURCES_FILE")
+    plugin_url=$(jq -r ".plugins[$i].gitUrl" "$SOURCES_FILE")
+    plugin_branch=$(jq -r ".plugins[$i].branch" "$SOURCES_FILE")
+    plugin_path="$SOURCE_DIR/plugins/$plugin_slug"
+
+    sync_extension "plugins" "$plugin_slug" "$plugin_url" "$plugin_branch"
+
     if [ -d "$plugin_path" ]; then
         manifest_file="$plugin_path/manifest.json"
         
@@ -192,17 +221,22 @@ for plugin_path in "$PLUGINS_SOURCE_DIR"/*; do
 done
 
 # --- PACK THEMES ---
-THEMES_SOURCE_DIR="$SOURCE_DIR/themes"
 THEMES_OUTPUT_DIR="$REGISTRY_DIR/themes"
 mkdir -p "$THEMES_OUTPUT_DIR"
 
-if [ -d "$THEMES_SOURCE_DIR" ]; then
-    for theme_path in "$THEMES_SOURCE_DIR"/*; do
-        if [ -d "$theme_path" ]; then
-            theme_slug=$(basename "$theme_path")
-            manifest_file="$theme_path/theme.json"
+num_themes=$(jq '.themes | length' "$SOURCES_FILE")
+for (( i=0; i<$num_themes; i++ )); do
+    theme_slug=$(jq -r ".themes[$i].slug" "$SOURCES_FILE")
+    theme_url=$(jq -r ".themes[$i].gitUrl" "$SOURCES_FILE")
+    theme_branch=$(jq -r ".themes[$i].branch" "$SOURCES_FILE")
+    theme_path="$SOURCE_DIR/themes/$theme_slug"
 
-            if [ -f "$manifest_file" ]; then
+    sync_extension "themes" "$theme_slug" "$theme_url" "$theme_branch"
+
+    if [ -d "$theme_path" ]; then
+        manifest_file="$theme_path/theme.json"
+
+        if [ -f "$manifest_file" ]; then
                 version=$(jq -r '.version' "$manifest_file")
                 name=$(jq -r '.name' "$manifest_file")
                 desc=$(jq -r '.description // ""' "$manifest_file")
@@ -276,7 +310,6 @@ if [ -d "$THEMES_SOURCE_DIR" ]; then
             fi
         fi
     done
-fi
 
 # --- CLEANUP ---
 # Remove the core source directory after packing is complete to save space

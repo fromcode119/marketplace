@@ -1,0 +1,56 @@
+{
+  "plugins": [
+    {
+      "slug": "analytics",
+      "gitUrl": "https://github.com/fromcode119/plugin-analytics.git",
+      "branch": "main"
+    },
+    {
+      "slug": "cms",
+      "gitUrl": "https://github.com/fromcode119/plugin-cms.git",
+      "branch": "main"
+    },
+    {
+      "slug": "ecommerce",
+      "gitUrl": "https://github.com/fromcode119/plugin-ecommerce.git",
+      "branch": "main"
+    },
+    {
+      "slug": "forms",
+      "gitUrl": "https://github.com/fromcode119/plugin-forms.git",
+      "branch": "main"
+    },
+    {
+      "slug": "privacy",
+      "gitUrl": "https://github.com/fromcode119/plugin-privacy.git",
+      "branch": "main"
+    },
+    {
+      "slug": "search",
+      "gitUrl": "https://github.com/fromcode119/plugin-search.git",
+      "branch": "main"
+    },
+    {
+      "slug": "seo",
+      "gitUrl": "https://github.com/fromcode119/plugin-seo.git",
+      "branch": "main"
+    },
+    {
+      "slug": "test-feature",
+      "gitUrl": "https://github.com/fromcode119/plugin-test-feature.git",
+      "branch": "main"
+    }
+  ],
+  "themes": [
+    {
+      "slug": "emerald-night",
+      "gitUrl": "https://github.com/fromcode119/theme-emerald-night.git",
+      "branch": "main"
+    },
+    {
+      "slug": "minimal-blue",
+      "gitUrl": "https://github.com/fromcode119/theme-minimal-blue.git",
+      "branch": "main"
+    }
+  ]
+}
