@@ -21,6 +21,12 @@ T_CLI_NO_ENTRY="No entry point found in %s (index.ts/js)"
 T_FINAL_CLEANUP="Final cleanup of build artifacts..."
 T_COMPLETE="Registry packing and metadata update complete."
 
+# Clean existing artifacts from output directories to ensure a fresh build
+echo "Cleaning old artifacts..."
+rm -f "$OUTPUT_DIR"/*.zip "$OUTPUT_DIR"/*.tar.gz 2>/dev/null
+rm -f "$REGISTRY_DIR/core"/*.zip "$REGISTRY_DIR/core"/*.tar.gz 2>/dev/null
+rm -f "$REGISTRY_DIR/themes"/*.zip "$REGISTRY_DIR/themes"/*.tar.gz 2>/dev/null
+
 mkdir -p "$OUTPUT_DIR"
 mkdir -p "$SOURCE_DIR/plugins"
 mkdir -p "$SOURCE_DIR/themes"
@@ -115,7 +121,7 @@ for (( i=0; i<$num_plugins; i++ )); do
     plugin_branch=$(jq -r ".plugins[$i].branch" "$SOURCES_FILE")
     plugin_path="$SOURCE_DIR/plugins/$plugin_slug"
 
-    # sync_extension "plugins" "$plugin_slug" "$plugin_url" "$plugin_branch"
+    sync_extension "plugins" "$plugin_slug" "$plugin_url" "$plugin_branch"
 
     if [ -d "$plugin_path" ]; then
         manifest_file="$plugin_path/manifest.json"
@@ -231,7 +237,7 @@ for (( i=0; i<$num_themes; i++ )); do
     theme_branch=$(jq -r ".themes[$i].branch" "$SOURCES_FILE")
     theme_path="$SOURCE_DIR/themes/$theme_slug"
 
-    # sync_extension "themes" "$theme_slug" "$theme_url" "$theme_branch"
+    sync_extension "themes" "$theme_slug" "$theme_url" "$theme_branch"
 
     if [ -d "$theme_path" ]; then
         manifest_file="$theme_path/theme.json"
@@ -312,19 +318,10 @@ for (( i=0; i<$num_themes; i++ )); do
     done
 
 # --- CLEANUP ---
-# Remove the core source directory after packing is complete to save space
-if [ -d "$CORE_SOURCE_DIR" ]; then
-    echo "Cleaning up temporary core source..."
-    rm -rf "$CORE_SOURCE_DIR"
+# Remove only the temporary build subdirectories to stay safe
+if [ -d "$SOURCE_DIR" ] && [[ "$SOURCE_DIR" == *"registry.fromcode.com/Source/source"* ]]; then
+    printf "$T_FINAL_CLEANUP\n"
+    rm -rf "$SOURCE_DIR/core" "$SOURCE_DIR/plugins" "$SOURCE_DIR/themes"
 fi
-
-# Clean up plugin/theme build artifacts from source to keep registry repo clean
-printf "$T_FINAL_CLEANUP\n"
-find "$SOURCE_DIR" -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null
-find "$SOURCE_DIR" -type d -name "dist" -exec rm -rf {} + 2>/dev/null
-find "$SOURCE_DIR" -type f -name "bundle.js" -delete 2>/dev/null
-find "$SOURCE_DIR" -type f -name "bundle.js.map" -delete 2>/dev/null
-# Remove compiled JS files if TS equivalent exists
-find "$SOURCE_DIR" -type f -name "*.js" -not -path "*/node_modules/*" -exec sh -c 'for f; do [ -f "${f%.js}.ts" ] && rm -f "$f"; done' sh {} +
 
 printf "$T_COMPLETE\n"
