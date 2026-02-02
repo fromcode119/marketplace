@@ -115,7 +115,7 @@ for (( i=0; i<$num_plugins; i++ )); do
     plugin_branch=$(jq -r ".plugins[$i].branch" "$SOURCES_FILE")
     plugin_path="$SOURCE_DIR/plugins/$plugin_slug"
 
-    sync_extension "plugins" "$plugin_slug" "$plugin_url" "$plugin_branch"
+    # sync_extension "plugins" "$plugin_slug" "$plugin_url" "$plugin_branch"
 
     if [ -d "$plugin_path" ]; then
         manifest_file="$plugin_path/manifest.json"
@@ -145,7 +145,7 @@ for (( i=0; i<$num_plugins; i++ )); do
             # 2. Build the plugin backend if index.ts exists
             if [ -f "$plugin_path/index.ts" ]; then
                 echo "Compiling backend for $plugin_slug..."
-                (cd "$plugin_path" && npx -p typescript tsc index.ts --esModuleInterop --skipLibCheck --target ESNext --module CommonJS --outDir .)
+                (cd "$plugin_path" && npx -p typescript tsc index.ts --esModuleInterop --skipLibCheck --target ESNext --module CommonJS --moduleResolution node --resolveJsonModule true --outDir .)
             fi
 
             # Create zip, EXCLUDING dev junk
@@ -231,7 +231,7 @@ for (( i=0; i<$num_themes; i++ )); do
     theme_branch=$(jq -r ".themes[$i].branch" "$SOURCES_FILE")
     theme_path="$SOURCE_DIR/themes/$theme_slug"
 
-    sync_extension "themes" "$theme_slug" "$theme_url" "$theme_branch"
+    # sync_extension "themes" "$theme_slug" "$theme_url" "$theme_branch"
 
     if [ -d "$theme_path" ]; then
         manifest_file="$theme_path/theme.json"
