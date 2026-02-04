@@ -145,14 +145,8 @@ for (( i=0; i<$num_plugins; i++ )); do
             
             printf "$T_PLUGIN_BUILDING\n" "$plugin_slug" "$version" "$(basename "$plugin_path")"
             
-            # 1. Build the plugin UI assets (bundle.js) using the CLI
+            # 1. Build the plugin UI assets AND Backend using the CLI
             (cd "$SOURCE_DIR" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" plugin build "$plugin_slug")
-            
-            # 2. Build the plugin backend if index.ts exists
-            if [ -f "$plugin_path/index.ts" ]; then
-                echo "Compiling backend for $plugin_slug..."
-                (cd "$plugin_path" && npx -p typescript tsc index.ts --esModuleInterop --skipLibCheck --target ESNext --module CommonJS --moduleResolution node --resolveJsonModule true --outDir .)
-            fi
 
             # Create zip, EXCLUDING dev junk
             TMP_ZIP_DIR=$(mktemp -d)
