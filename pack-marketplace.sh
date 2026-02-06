@@ -45,6 +45,11 @@ sync_extension() {
     local branch=$4
     local target_dir="$SOURCE_DIR/$type/$slug"
 
+    # Inject token into URL if available
+    if [ -n "$GITHUB_TOKEN" ] && [[ "$url" == "https://github.com"* ]]; then
+        url="${url/https:\/\/github.com/https:\/\/${GITHUB_TOKEN}@github.com}"
+    fi
+
     printf "$T_EXTENSION_SYNC\n" "$slug" "$url" "$branch"
 
     if [ ! -d "$target_dir/.git" ]; then
@@ -57,6 +62,9 @@ sync_extension() {
 
 # --- SYNC CORE SOURCE ---
 CORE_REPO_URL="https://github.com/fromcode119/framework"
+if [ -n "$GITHUB_TOKEN" ]; then
+    CORE_REPO_URL="https://${GITHUB_TOKEN}@github.com/fromcode119/framework"
+fi
 CORE_SOURCE_DIR="$SOURCE_DIR/core"
 mkdir -p "$SOURCE_DIR"
 
@@ -313,7 +321,7 @@ for (( i=0; i<$num_themes; i++ )); do
 
 # --- CLEANUP ---
 # Remove only the temporary build subdirectories to stay safe
-if [ -d "$SOURCE_DIR" ] && [[ "$SOURCE_DIR" == *"registry.fromcode.com/Source/source"* ]]; then
+if [ -d "$SOURCE_DIR" ] && [[ "$SOURCE_DIR" == *"marketplace.fromcode.com/Source/source"* ]]; then
     printf "$T_FINAL_CLEANUP\n"
     rm -rf "$SOURCE_DIR/core" "$SOURCE_DIR/plugins" "$SOURCE_DIR/themes"
 fi

@@ -1,0 +1,71 @@
+ Image source-marketplace Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 764B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 2.36kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:22-alpine
+#3 DONE 0.5s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [framework-builder 1/7] FROM docker.io/library/node:22-alpine@sha256:e4bf2a82ad0a4037d28035ae71529873c069b13eb0455466ae0bc13363826e34
+#5 resolve docker.io/library/node:22-alpine@sha256:e4bf2a82ad0a4037d28035ae71529873c069b13eb0455466ae0bc13363826e34 done
+#5 DONE 0.0s
+
+#6 [builder 2/7] WORKDIR /app
+#6 CACHED
+
+#7 [internal] load build context
+#7 transferring context: 31.12kB 0.0s done
+#7 DONE 0.0s
+
+#8 [framework-builder 6/7] RUN npm install
+#8 CACHED
+
+#9 [framework-builder 7/7] RUN npx tsc -b packages/core packages/api packages/database packages/auth packages/sdk packages/cache packages/email packages/media packages/scheduler packages/marketplace-client
+#9 CACHED
+
+#10 [framework-builder 5/7] WORKDIR /framework
+#10 CACHED
+
+#11 [framework-builder 2/7] RUN apk add --no-cache git python3 make g++
+#11 CACHED
+
+#12 [framework-builder 4/7] RUN if [ -z "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" ]; then       git clone --depth 1 https://github.com/fromcode119/framework . ;     else       git clone --depth 1 https://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@github.com/fromcode119/framework . ;     fi
+#12 CACHED
+
+#13 [framework-builder 3/7] WORKDIR /framework
+#13 CACHED
+
+#14 [builder 3/7] COPY --from=framework-builder /framework/packages /app/framework/packages
+#14 CACHED
+
+#15 [builder 4/7] COPY . /app/marketplace
+#15 DONE 0.0s
+
+#16 [builder 5/7] WORKDIR /app/marketplace
+#16 DONE 0.0s
+
+#17 [builder 6/7] RUN NPM_CONFIG_USERCONFIG=/dev/null npm install ../framework/packages/core                 ../framework/packages/database                 ../framework/packages/api                 ../framework/packages/auth                 ../framework/packages/sdk                 ../framework/packages/cache                 ../framework/packages/email                 ../framework/packages/media                 ../framework/packages/scheduler                 ../framework/packages/marketplace-client                 --install-links                 --no-audit                 --prefer-offline
+#17 1.501 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.521 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.558 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.560 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.562 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.634 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.671 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.677 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.686 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.691 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.701 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.714 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.914 npm notice Access token expired or revoked. Please try logging in again.
+#17 1.995 npm notice Access token expired or revoked. Please try logging in again.
+#17 21.76 npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+

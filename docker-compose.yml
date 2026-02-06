@@ -1,27 +1,49 @@
-# docker-compose.yml
-# Based on framework-plan.md Section 12.2
-
+# Marketplace Hub - Independent docker-compose
 services:
-  # ===================
-  # Plugin Registry
-  # ===================
-  registry:
-    build:
-      context: ./
+  marketplace-db:
+    image: postgres:15-alpine
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fromcode}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marketplace_password}
+      POSTGRES_DB: ${POSTGRES_DB:-fromcode_marketplace}
     volumes:
-      - ./:/usr/share/nginx/html
+      - marketplace_postgres_data:/var/lib/postgresql/data
     networks:
-      framework:
-        aliases:
-          - registry.fromcode.local
-      public:
+      - marketplace
     restart: unless-stopped
 
+  marketplace-redis:
+    image: redis:7-alpine
+    networks:
+      - marketplace
+    restart: unless-stopped
+
+  marketplace:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    env_file: .env
+    depends_on:
+      - marketplace-db
+      - marketplace-redis
+    volumes:
+      - ./plugins:/app/public/plugins
+      - ./themes:/app/public/themes
+      - ./uploads:/app/public/uploads
+    networks:
+      marketplace:
+      web:
+        aliases:
+          - marketplace.fromcode.local
+
 networks:
-  framework:
-  public:
+  marketplace:
+  web:
     external: true
     name: web
 
 volumes:
-  postgres_data:
+  marketplace_postgres_data:

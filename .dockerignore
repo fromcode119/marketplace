@@ -1,0 +1,13 @@
+node_modules
+package-lock.json
+dist
+_trash
+.env
+.npmrc
+*.tgz
+*.log
+.git
+.gitignore
+.DS_Store
+uploads
+```
