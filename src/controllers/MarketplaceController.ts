@@ -20,6 +20,14 @@ export class MarketplaceController {
         try {
             const baseUrl = `${req.protocol}://${req.get('host')}`;
 
+            // Helper to safely parse JSON fields if the DB returns them as strings
+            const safeParse = (val: any) => {
+                if (typeof val === 'string') {
+                    try { return JSON.parse(val); } catch (e) { return []; }
+                }
+                return val || [];
+            };
+
             // Fetch marketplace settings
             const settings = await this.db.findOne(MarketplaceSettings.slug, {});
             const marketplaceVersion = settings?.marketplace_version || "1.2.0";
@@ -86,8 +94,8 @@ export class MarketplaceController {
                     category: p.category,
                     author: publisher?.name || 'Fromcode Official', 
                     iconUrl: p.icon_url,
-                    capabilities: p.capabilities || [],
-                    screenshots: p.screenshots || [],
+                    capabilities: safeParse(p.capabilities),
+                    screenshots: safeParse(p.screenshots),
                     isFeatured: p.is_featured,
                     isVerified: p.is_verified,
                     isTrending: (p.trending_score || 0) > trendingThreshold,
@@ -108,7 +116,7 @@ export class MarketplaceController {
                 downloadUrl: `${baseUrl}${themeDlPrefix}/${t.slug}`,
                 author: t.author,
                 previewUrl: t.preview_url,
-                screenshots: t.screenshots || [],
+                screenshots: safeParse(t.screenshots),
                 isFeatured: t.is_featured,
                 downloads: t.downloads
             }));
