@@ -23,8 +23,8 @@ export class MarketplaceController {
             // Fetch marketplace settings
             const settings = await this.db.findOne(MarketplaceSettings.slug, {});
             const marketplaceVersion = settings?.marketplace_version || "1.2.0";
-            const dlPrefix = settings?.download_prefix || "/api/marketplace/download";
-            const themeDlPrefix = settings?.theme_download_prefix || "/api/marketplace/download-theme";
+            const dlPrefix = settings?.download_prefix || "/download";
+            const themeDlPrefix = settings?.theme_download_prefix || "/download-theme";
             const trendingThreshold = settings?.trending_threshold || 50;
 
             // Fetch all published plugins

@@ -96,7 +96,7 @@ if [ -d "$CORE_SOURCE_DIR" ]; then
     if [ -f "$core_package_json" ]; then
         version=$(jq -r '.version' "$core_package_json")
         output_name="fromcode-core-${version}.zip"
-        download_url="./core/$output_name"
+        download_url="/core/$output_name"
         
         printf "$T_CORE_PACKING\n" "$version"
         # Pack only essential system files: packages, root configs, and docker setup
@@ -149,7 +149,7 @@ for (( i=0; i<$num_plugins; i++ )); do
             homepage=$(jq -r '.homepage // ""' "$manifest_file")
             
             output_name="${plugin_slug}-${version}.zip"
-            download_url="./plugins/$output_name"
+            download_url="/plugins/$output_name"
             
             printf "$T_PLUGIN_BUILDING\n" "$plugin_slug" "$version" "$(basename "$plugin_path")"
             
@@ -251,7 +251,7 @@ for (( i=0; i<$num_themes; i++ )); do
                 author=$(jq -r '.author // ""' "$manifest_file")
                 
                 output_name="${theme_slug}-${version}.zip"
-                download_url="./themes/$output_name"
+                download_url="/themes/$output_name"
                 
                 printf "$T_THEME_BUILDING\n" "$theme_slug" "$version"
                 

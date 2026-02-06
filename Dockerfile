@@ -26,8 +26,7 @@ RUN rm -rf .npmrc ~/.npmrc /root/.npmrc && \
     npm config set fund false
 
 # Fix missing dependencies and types in the cloned repo before building
-RUN sed -i 's/"cors": "\^2.8.5",/"cors": "^2.8.5", "dotenv": "^16.4.7",/g' packages/api/package.json && \
-    find packages/sdk -name "*.ts" -exec sed -i '/showTime?: boolean;/a \  fields?: Field[];' {} +
+# (These fixes are no longer needed as they are present in the framework repo)
 
 # Move to the root of the cloned framework and build the core packages
 RUN npm install --loglevel error
@@ -81,6 +80,6 @@ COPY --from=builder /app/marketplace /app/marketplace
 
 WORKDIR /app/marketplace
 
-EXPOSE 4000
+EXPOSE 80
 
 CMD ["npm", "start"]

@@ -30,20 +30,22 @@ services:
       - marketplace-db
       - marketplace-redis
     volumes:
-      - ./plugins:/app/public/plugins
-      - ./themes:/app/public/themes
-      - ./uploads:/app/public/uploads
+      - ./plugins:/app/marketplace/plugins
+      - ./themes:/app/marketplace/themes
+      - ./uploads:/app/marketplace/uploads
     networks:
       marketplace:
-      web:
+      docker_web:
         aliases:
+          - marketplace
+          - marketplace.framework.local
           - marketplace.fromcode.local
 
 networks:
   marketplace:
-  web:
+  docker_web:
     external: true
-    name: web
+    name: docker_web
 
 volumes:
   marketplace_postgres_data:

@@ -52,6 +52,12 @@ async function startMarketplaceHub() {
     const server = new APIServer(manager, null as any, auth);
     await server.initialize();
 
+    // Serve static plugin and theme files (ZIPs)
+    const publicDir = path.resolve(__dirname, '../');
+    server.app.use('/plugins', express.static(path.join(publicDir, 'plugins')));
+    server.app.use('/themes', express.static(path.join(publicDir, 'themes')));
+    server.app.use('/core', express.static(path.join(publicDir, 'core')));
+
     // Setup legacy and dynamic registry routes
     server.app.use('/', setupMarketplaceRoutes(manager));
 
@@ -144,9 +150,9 @@ async function seedMarketplace(manager: PluginManager) {
         await db.insert(MarketplaceSettings.slug, {
             marketplace_name: 'Fromcode Marketplace',
             marketplace_version: data.version || '1.2.0',
-            download_prefix: '/api/marketplace/download',
-            theme_download_prefix: '/api/marketplace/download-theme',
-            core_download_prefix: '/api/marketplace/download-core'
+            download_prefix: '/download',
+            theme_download_prefix: '/download-theme',
+            core_download_prefix: '/download-core'
         });
         
         logger.info('Seeding completed successfully.');
