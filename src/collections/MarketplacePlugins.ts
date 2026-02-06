@@ -55,6 +55,14 @@ const MarketplacePlugins: Collection = {
       type: 'text',
     },
     {
+      name: 'capabilities',
+      type: 'json',
+    },
+    {
+      name: 'changelog',
+      type: 'json',
+    },
+    {
       name: 'screenshots',
       type: 'array',
       fields: [

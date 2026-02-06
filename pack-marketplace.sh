@@ -41,22 +41,27 @@ jq --arg date "$last_updated" '.lastUpdated = $date' "$REGISTRY_FILE" > "${REGIS
 sync_extension() {
     local type=$1 # plugins or themes
     local slug=$2
-    local url=$3
+    local git_url=$3
     local branch=$4
     local target_dir="$SOURCE_DIR/$type/$slug"
+    local final_url="$git_url"
 
-    # Inject token into URL if available
-    if [ -n "$GITHUB_TOKEN" ] && [[ "$url" == "https://github.com"* ]]; then
-        url="${url/https:\/\/github.com/https:\/\/${GITHUB_TOKEN}@github.com}"
+    # Inject token into URL if available (using more reliable replacement)
+    if [ -n "$GITHUB_TOKEN" ] && [[ "$git_url" == https://github.com/* ]]; then
+        final_url="https://${GITHUB_TOKEN}@github.com/${git_url#https://github.com/}"
     fi
 
-    printf "$T_EXTENSION_SYNC\n" "$slug" "$url" "$branch"
+    printf "$T_EXTENSION_SYNC\n" "$slug" "$git_url" "$branch"
 
-    if [ ! -d "$target_dir/.git" ]; then
+    if [ ! -d "$target_dir" ] || [ ! -d "$target_dir/.git" ]; then
         rm -rf "$target_dir"
-        git clone --depth 1 --branch "$branch" "$url" "$target_dir"
+        git clone --depth 1 --branch "$branch" --quiet "$final_url" "$target_dir" || { echo "Failed to clone $slug"; return 1; }
     else
-        (cd "$target_dir" && git fetch origin "$branch" && git reset --hard "origin/$branch")
+        # Update remote URL to ensure token is used
+        (cd "$target_dir" && \
+         git remote set-url origin "$final_url" && \
+         git fetch origin "$branch" --quiet && \
+         git reset --hard "origin/$branch") || { echo "Failed to sync $slug"; return 1; }
     fi
 }
 
@@ -84,8 +89,14 @@ CLI_PATH="$CORE_SOURCE_DIR/packages/cli"
 if [ -d "$CLI_PATH" ]; then
     echo "Preparing Fromcode CLI for registry builds..."
     
-    (cd "$CORE_SOURCE_DIR" && npm install --quiet && npm run build --workspace=@fromcode/cli)
+    # We need to build the CLI and its internal dependencies (database, core, etc.)
+    (cd "$CORE_SOURCE_DIR" && npm install --quiet && npm run build)
 fi
+
+# Set dummy environment variables to satisfy CLI validation during builds if not already set
+export DATABASE_URL="${DATABASE_URL:-postgres://localhost:5432/sync_only}"
+export JWT_SECRET="${JWT_SECRET:-sync_only_secret_must_be_at_least_32_characters_long}"
+export NODE_ENV="${NODE_ENV:-development}"
 
 # --- PACK CORE ---
 CORE_OUTPUT_DIR="$REGISTRY_DIR/core"
@@ -118,6 +129,14 @@ if [ -d "$CORE_SOURCE_DIR" ]; then
            "$REGISTRY_FILE" > "${REGISTRY_FILE}.tmp" && cat "${REGISTRY_FILE}.tmp" > "$REGISTRY_FILE" && rm "${REGISTRY_FILE}.tmp"
         
         printf "$T_CORE_SUCCESS\n" "$version"
+
+        # Link built packages so the sync script can find them
+        mkdir -p node_modules/@fromcode
+        ln -sf "$CORE_SOURCE_DIR/packages/core" node_modules/@fromcode/core
+        ln -sf "$CORE_SOURCE_DIR/packages/database" node_modules/@fromcode/database
+        ln -sf "$CORE_SOURCE_DIR/packages/api" node_modules/@fromcode/api
+        ln -sf "$CORE_SOURCE_DIR/packages/auth" node_modules/@fromcode/auth
+        ln -sf "$CORE_SOURCE_DIR/packages/sdk" node_modules/@fromcode/sdk
     fi
 fi
 
@@ -151,7 +170,7 @@ for (( i=0; i<$num_plugins; i++ )); do
             output_name="${plugin_slug}-${version}.zip"
             download_url="/plugins/$output_name"
             
-            printf "$T_PLUGIN_BUILDING\n" "$plugin_slug" "$version" "$(basename "$plugin_path")"
+            printf "$T_PLUGIN_BUILDING\n" "$plugin_slug" "$version"
             
             # 1. Build the plugin UI assets AND Backend using the CLI
             (cd "$SOURCE_DIR" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" plugin build "$plugin_slug")
@@ -319,11 +338,28 @@ for (( i=0; i<$num_themes; i++ )); do
         fi
     done
 
+# Synchronize the newly generated marketplace.json with the database
+echo "Synchronizing with Database..."
+# We run this inside the container so it can resolve 'marketplace-db' by name and use the internal network
+if docker-compose ps -q marketplace > /dev/null 2>&1; then
+    # Upload the fresh registry and sync script to the container to ensure they are up to date
+    cat "$REGISTRY_FILE" | docker-compose exec -T marketplace sh -c "cat > marketplace.json"
+    cat src/sync-db.ts | docker-compose exec -T marketplace sh -c "cat > src/sync-db.ts"
+    
+    # Execute the sync script within the container environment
+    # This allows using the internal 'marketplace-db' hostname
+    docker-compose exec -T marketplace npx tsx src/sync-db.ts
+else
+    echo "Warning: Marketplace container is not running. Synchronization skipped."
+    echo "To sync manually: docker-compose up -d && ./pack-marketplace.sh"
+fi
+
 # --- CLEANUP ---
 # Remove only the temporary build subdirectories to stay safe
 if [ -d "$SOURCE_DIR" ] && [[ "$SOURCE_DIR" == *"marketplace.fromcode.com/Source/source"* ]]; then
     printf "$T_FINAL_CLEANUP\n"
     rm -rf "$SOURCE_DIR/core" "$SOURCE_DIR/plugins" "$SOURCE_DIR/themes"
+    rm -rf node_modules/@fromcode
 fi
 
 printf "$T_COMPLETE\n"

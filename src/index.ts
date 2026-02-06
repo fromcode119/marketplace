@@ -59,7 +59,9 @@ async function startMarketplaceHub() {
     server.app.use('/core', express.static(path.join(publicDir, 'core')));
 
     // Setup legacy and dynamic registry routes
-    server.app.use('/', setupMarketplaceRoutes(manager));
+    const marketplaceRouter = setupMarketplaceRoutes(manager);
+    server.app.use('/api/marketplace', marketplaceRouter);
+    server.app.use('/', marketplaceRouter);
 
     // Setup routes
     const port = Number(process.env.MARKETPLACE_PORT || process.env.REGISTRY_PORT) || 4000;
@@ -112,9 +114,10 @@ async function seedMarketplace(manager: PluginManager) {
                 category: plugin.category,
                 download_url: plugin.downloadUrl,
                 icon_url: plugin.iconUrl,
-                screenshots: Array.isArray(plugin.screenshots) 
+                capabilities: JSON.stringify(plugin.capabilities || []),
+                screenshots: JSON.stringify(Array.isArray(plugin.screenshots) 
                     ? plugin.screenshots.map((s: any) => typeof s === 'string' ? { url: s } : s)
-                    : [],
+                    : []),
                 status: 'published'
             });
         }
@@ -128,9 +131,9 @@ async function seedMarketplace(manager: PluginManager) {
                     description: theme.description,
                     author: theme.author || 'Fromcode Design Team',
                     download_url: theme.downloadUrl,
-                    screenshots: Array.isArray(theme.screenshots) 
+                    screenshots: JSON.stringify(Array.isArray(theme.screenshots) 
                         ? theme.screenshots.map((s: any) => typeof s === 'string' ? { url: s } : s)
-                        : [],
+                        : []),
                     status: 'published'
                 });
             }

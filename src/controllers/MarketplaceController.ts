@@ -134,9 +134,14 @@ export class MarketplaceController {
      */
     public sync = async (req: Request, res: Response) => {
         try {
-            const registryPath = require('path').resolve(process.cwd(), 'marketplace.json');
+            let registryPath = require('path').resolve(process.cwd(), 'marketplace.json');
             if (!require('fs').existsSync(registryPath)) {
-                return res.status(404).json({ error: 'marketplace.json not found' });
+                // Try registry.json as fallback
+                registryPath = require('path').resolve(process.cwd(), 'registry.json');
+            }
+            
+            if (!require('fs').existsSync(registryPath)) {
+                return res.status(404).json({ error: 'Neither marketplace.json nor registry.json found' });
             }
 
             const data = JSON.parse(require('fs').readFileSync(registryPath, 'utf8'));
@@ -151,10 +156,11 @@ export class MarketplaceController {
                     category: plugin.category,
                     download_url: plugin.downloadUrl,
                     icon_url: plugin.iconUrl,
-                    capabilities: plugin.capabilities || [],
-                    screenshots: Array.isArray(plugin.screenshots) 
+                    capabilities: JSON.stringify(plugin.capabilities || []),
+                    changelog: JSON.stringify(plugin.changelog || []),
+                    screenshots: JSON.stringify(Array.isArray(plugin.screenshots) 
                         ? plugin.screenshots.map((s: any) => typeof s === 'string' ? { url: s } : s)
-                        : [],
+                        : []),
                     status: 'published'
                 };
 
@@ -179,9 +185,9 @@ export class MarketplaceController {
                         description: theme.description,
                         author: theme.author || 'Fromcode Official',
                         download_url: theme.downloadUrl,
-                        screenshots: Array.isArray(theme.screenshots) 
+                        screenshots: JSON.stringify(Array.isArray(theme.screenshots) 
                             ? theme.screenshots.map((s: any) => typeof s === 'string' ? { url: s } : s)
-                            : [],
+                            : []),
                         status: 'published'
                     };
 

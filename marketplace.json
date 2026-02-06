@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-02-04T11:24:20Z",
+  "lastUpdated": "2026-02-06T14:20:45Z",
   "core": {
     "version": "0.1.1",
     "downloadUrl": "/core/fromcode-core-0.1.1.zip",
-    "lastUpdated": "2026-02-04T11:24:20Z"
+    "lastUpdated": "2026-02-06T14:20:45Z"
   },
   "plugins": [
     {
@@ -28,10 +28,10 @@
     {
       "slug": "cms",
       "name": "Content Management System",
-      "version": "1.5.1",
+      "version": "1.5.2",
       "description": "Enterprise-grade CMS - Elementor-tier Blocks & Section Library.",
-      "downloadUrl": "/plugins/cms-1.5.1.zip",
-      "category": "general",
+      "downloadUrl": "/plugins/cms-1.5.2.zip",
+      "category": "content",
       "author": "Fromcode Core",
       "homepage": "https://fromcode.com",
       "capabilities": [
@@ -68,7 +68,7 @@
       "version": "1.0.0",
       "description": "Professional catalog, order management, and payment processing.",
       "downloadUrl": "/plugins/ecommerce-1.0.0.zip",
-      "category": "business",
+      "category": "ecommerce",
       "author": "Fromcode Core",
       "homepage": "https://fromcode.com",
       "capabilities": [
@@ -87,7 +87,7 @@
       "version": "1.0.0",
       "description": "Powerful lead capture and form building. Create dynamic forms and manage user submissions centrally.",
       "downloadUrl": "/plugins/forms-1.0.0.zip",
-      "category": "marketing",
+      "category": "engagement",
       "author": "Fromcode Core",
       "homepage": "https://fromcode.com",
       "capabilities": [
@@ -107,7 +107,7 @@
       "version": "1.0.0",
       "description": "Cookie consent management and GDPR compliance tools.",
       "downloadUrl": "/plugins/privacy-1.0.0.zip",
-      "category": "legal",
+      "category": "governance",
       "author": "Fromcode Core",
       "homepage": "https://fromcode.com",
       "capabilities": [
@@ -143,7 +143,7 @@
       "version": "1.1.0",
       "description": "Professional search engine optimization suite. Automated sitemaps, health checks, and metadata management.",
       "downloadUrl": "/plugins/seo-1.1.0.zip",
-      "category": "general",
+      "category": "intelligence",
       "author": "Fromcode Core",
       "homepage": "https://fromcode.com",
       "capabilities": [
@@ -151,7 +151,8 @@
         "database",
         "admin",
         "frontend",
-        "api"
+        "api",
+        "i18n"
       ]
     },
     {
