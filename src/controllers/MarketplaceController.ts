@@ -130,6 +130,80 @@ export class MarketplaceController {
     };
 
     /**
+     * Synchronize the database with the local marketplace.json file
+     */
+    public sync = async (req: Request, res: Response) => {
+        try {
+            const registryPath = require('path').resolve(process.cwd(), 'marketplace.json');
+            if (!require('fs').existsSync(registryPath)) {
+                return res.status(404).json({ error: 'marketplace.json not found' });
+            }
+
+            const data = JSON.parse(require('fs').readFileSync(registryPath, 'utf8'));
+            
+            // 1. Sync Plugins
+            for (const plugin of data.plugins) {
+                const existing = await this.db.findOne(MarketplacePlugins.slug, { slug: plugin.slug });
+                const updateData = {
+                    name: plugin.name,
+                    version: plugin.version,
+                    description: plugin.description,
+                    category: plugin.category,
+                    download_url: plugin.downloadUrl,
+                    icon_url: plugin.iconUrl,
+                    capabilities: plugin.capabilities || [],
+                    screenshots: Array.isArray(plugin.screenshots) 
+                        ? plugin.screenshots.map((s: any) => typeof s === 'string' ? { url: s } : s)
+                        : [],
+                    status: 'published'
+                };
+
+                if (existing) {
+                    await this.db.update(MarketplacePlugins.slug, { id: existing.id }, updateData);
+                } else {
+                    await this.db.insert(MarketplacePlugins.slug, {
+                        ...updateData,
+                        slug: plugin.slug,
+                        publisher: '0'
+                    });
+                }
+            }
+
+            // 2. Sync Themes
+            if (data.themes) {
+                for (const theme of data.themes) {
+                    const existing = await this.db.findOne(MarketplaceThemes.slug, { slug: theme.slug });
+                    const updateData = {
+                        name: theme.name,
+                        version: theme.version,
+                        description: theme.description,
+                        author: theme.author || 'Fromcode Official',
+                        download_url: theme.downloadUrl,
+                        screenshots: Array.isArray(theme.screenshots) 
+                            ? theme.screenshots.map((s: any) => typeof s === 'string' ? { url: s } : s)
+                            : [],
+                        status: 'published'
+                    };
+
+                    if (existing) {
+                        await this.db.update(MarketplaceThemes.slug, { id: existing.id }, updateData);
+                    } else {
+                        await this.db.insert(MarketplaceThemes.slug, {
+                            ...updateData,
+                            slug: theme.slug
+                        });
+                    }
+                }
+            }
+
+            res.json({ success: true, message: 'Marketplace database synchronized with marketplace.json' });
+        } catch (err: any) {
+            console.error('[MarketplaceController] Sync error:', err);
+            res.status(500).json({ error: 'Sync failed: ' + err.message });
+        }
+    };
+
+    /**
      * Handle third-party plugin/theme submissions
      */
     public submitPlugin = async (req: Request, res: Response) => {

@@ -9,6 +9,7 @@ export function setupMarketplaceRoutes(manager: PluginManager) {
     // Dynamic Marketplace Data API
     router.get('/registry.json', controller.getMarketplaceData.bind(controller));
     router.get('/marketplace.json', controller.getMarketplaceData.bind(controller));
+    router.post('/sync', controller.sync.bind(controller));
     
     // Developer Portal Submissions
     router.post('/submit', controller.submitPlugin.bind(controller));

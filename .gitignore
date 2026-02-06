@@ -14,7 +14,7 @@ themes/*.tar.gz
 core/*.zip
 core/*.tar.gz
 !core/.keep
-registry.json
+marketplace.json
 
 # Local env files
 .env

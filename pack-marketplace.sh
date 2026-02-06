@@ -6,7 +6,7 @@ REGISTRY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 SOURCE_DIR="$REGISTRY_DIR/source"
 SOURCES_FILE="$REGISTRY_DIR/sources.json"
 OUTPUT_DIR="$REGISTRY_DIR/plugins"
-REGISTRY_FILE="$REGISTRY_DIR/registry.json"
+REGISTRY_FILE="$REGISTRY_DIR/marketplace.json"
 
 # --- TRANSLATIONS (EN) ---
 T_CORE_PACKING="Packing Core v%s..."
