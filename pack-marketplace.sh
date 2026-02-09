@@ -274,8 +274,14 @@ for (( i=0; i<$num_themes; i++ )); do
                 
                 printf "$T_THEME_BUILDING\n" "$theme_slug" "$version"
                 
-                # Build the theme UI assets on the fly
-                (cd "$theme_path" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" theme build "$theme_slug")
+                # Build the theme UI assets
+                if [ -f "$theme_path/package.json" ] && jq -e '.scripts.build' "$theme_path/package.json" > /dev/null; then
+                    echo "Running custom build script for theme $theme_slug..."
+                    (cd "$theme_path" && npm install --quiet && npm run build)
+                else
+                    # Fallback to standard CLI build
+                    (cd "$theme_path" && node "$CORE_SOURCE_DIR/packages/cli/dist/bin.js" theme build "$theme_slug")
+                fi
                 
                 # Create zip, EXCLUDING dev junk
                 TMP_ZIP_DIR=$(mktemp -d)
@@ -355,10 +361,10 @@ else
 fi
 
 # --- CLEANUP ---
-# Remove only the temporary build subdirectories to stay safe
+# Remove the temporary build directory to stay safe and clean
 if [ -d "$SOURCE_DIR" ] && [[ "$SOURCE_DIR" == *"marketplace.fromcode.com/Source/source"* ]]; then
     printf "$T_FINAL_CLEANUP\n"
-    rm -rf "$SOURCE_DIR/core" "$SOURCE_DIR/plugins" "$SOURCE_DIR/themes"
+    rm -rf "$SOURCE_DIR"
     rm -rf node_modules/@fromcode
 fi
 

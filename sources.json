@@ -51,6 +51,11 @@
       "slug": "minimal-blue",
       "gitUrl": "https://github.com/fromcode119/theme-minimal-blue.git",
       "branch": "main"
+    },
+    {
+      "slug": "snapbilt",
+      "gitUrl": "https://github.com/fromcode119/theme-snapbilt.git",
+      "branch": "main"
     }
   ]
 }
