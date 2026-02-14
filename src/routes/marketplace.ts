@@ -1,6 +1,6 @@
 import express from 'express';
 import { PluginManager } from '@fromcode/core';
-import { MarketplaceController } from '../controllers/MarketplaceController';
+import { MarketplaceController } from '../controllers/marketplace-controller';
 
 export function setupMarketplaceRoutes(manager: PluginManager) {
     const router = express.Router();

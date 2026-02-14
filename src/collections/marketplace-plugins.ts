@@ -1,10 +1,10 @@
 import { Collection } from '@fromcode/sdk';
 
-const MarketplaceThemes: Collection = {
-  slug: 'marketplace_themes',
+const MarketplacePlugins: Collection = {
+  slug: 'marketplace_plugins',
   admin: {
     useAsTitle: 'name',
-    group: 'Marketplace',
+    group: 'marketplace',
   },
   fields: [
     {
@@ -28,9 +28,22 @@ const MarketplaceThemes: Collection = {
       type: 'textarea',
     },
     {
-      name: 'author',
-      type: 'text',
+      name: 'publisher',
+      type: 'relationship',
+      relationTo: 'users', // Linking to system users
       required: true,
+    },
+    {
+      name: 'category',
+      type: 'select',
+      options: [
+        { label: 'General', value: 'general' },
+        { label: 'Business', value: 'business' },
+        { label: 'Productivity', value: 'productivity' },
+        { label: 'Marketing', value: 'marketing' },
+        { label: 'Legal', value: 'legal' },
+        { label: 'Testing', value: 'testing' }
+      ]
     },
     {
       name: 'download_url',
@@ -38,8 +51,16 @@ const MarketplaceThemes: Collection = {
       required: true,
     },
     {
-      name: 'preview_url',
+      name: 'icon_url',
       type: 'text',
+    },
+    {
+      name: 'capabilities',
+      type: 'json',
+    },
+    {
+      name: 'changelog',
+      type: 'json',
     },
     {
       name: 'screenshots',
@@ -62,13 +83,33 @@ const MarketplaceThemes: Collection = {
       defaultValue: false,
     },
     {
+      name: 'is_verified',
+      type: 'boolean',
+      defaultValue: false,
+    },
+    {
       name: 'downloads',
       type: 'number',
       defaultValue: 0,
     },
     {
+      name: 'trending_score',
+      type: 'number',
+      defaultValue: 0,
+    },
+    {
+      name: 'documentation',
+      type: 'code',
+      admin: {
+        description: 'Markdown documentation for the plugin',
+      },
+    },
+    {
       name: 'stripe_account_id',
       type: 'text',
+      admin: {
+        description: 'Stripe Connect Account ID for revenue sharing',
+      },
     },
     {
       name: 'price',
@@ -89,4 +130,4 @@ const MarketplaceThemes: Collection = {
   ],
 };
 
-export default MarketplaceThemes;
+export default MarketplacePlugins;

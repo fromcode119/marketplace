@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import { PluginManager } from '@fromcode/core';
-import MarketplacePlugins from '../collections/MarketplacePlugins';
-import MarketplaceThemes from '../collections/MarketplaceThemes';
-import MarketplaceCore from '../collections/MarketplaceCore';
-import MarketplaceSettings from '../collections/MarketplaceSettings';
-import Reviews from '../collections/Reviews';
+import MarketplacePlugins from '../collections/marketplace-plugins';
+import MarketplaceThemes from '../collections/marketplace-themes';
+import MarketplaceCore from '../collections/marketplace-core';
+import MarketplaceSettings from '../collections/marketplace-settings';
+import Reviews from '../collections/reviews';
 
 export class MarketplaceController {
     private db: any;
@@ -237,7 +237,7 @@ export class MarketplaceController {
                     status: 'pending' // Re-review on update
                 });
                 return res.json({ 
-                    message: `${type === 'theme' ? 'Theme' : 'Plugin'} update submitted for review`, 
+                    message: `${type === 'theme' ? 'theme' : 'plugin'} update submitted for review`, 
                     slug: plugin.slug,
                     status: 'pending'
                 });
@@ -251,7 +251,7 @@ export class MarketplaceController {
             });
 
             res.json({ 
-                message: `${type === 'theme' ? 'Theme' : 'Plugin'} submission received for review`, 
+                message: `${type === 'theme' ? 'theme' : 'plugin'} submission received for review`, 
                 slug: plugin.slug,
                 status: 'pending'
             });

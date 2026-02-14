@@ -4,7 +4,7 @@ const Reviews: Collection = {
   slug: 'marketplace_reviews',
   admin: {
     useAsTitle: 'rating',
-    group: 'Marketplace',
+    group: 'marketplace',
   },
   fields: [
     {

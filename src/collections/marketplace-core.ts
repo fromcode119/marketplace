@@ -4,7 +4,7 @@ const MarketplaceCore: Collection = {
   slug: 'marketplace_core',
   admin: {
     useAsTitle: 'version',
-    group: 'Marketplace',
+    group: 'marketplace',
   },
   fields: [
     {

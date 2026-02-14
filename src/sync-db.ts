@@ -1,6 +1,6 @@
 import { PluginManager } from '@fromcode/core';
-import MarketplacePlugins from './collections/MarketplacePlugins';
-import MarketplaceThemes from './collections/MarketplaceThemes';
+import MarketplacePlugins from './collections/marketplace-plugins';
+import MarketplaceThemes from './collections/marketplace-themes';
 import * as path from 'path';
 import * as fs from 'fs';
 import dotenv from 'dotenv';

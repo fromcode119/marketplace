@@ -4,7 +4,7 @@ const MarketplaceSettings: Collection = {
   slug: 'marketplace_settings',
   admin: {
     useAsTitle: 'marketplace_name',
-    group: 'Marketplace',
+    group: 'marketplace',
   },
   fields: [
     {
