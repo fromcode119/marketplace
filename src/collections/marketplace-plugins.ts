@@ -1,4 +1,4 @@
-import { Collection } from '@fromcode/sdk';
+import { Collection } from '@fromcode119/sdk';
 
 const MarketplacePlugins: Collection = {
   slug: 'marketplace_plugins',

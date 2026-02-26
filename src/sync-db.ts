@@ -1,4 +1,4 @@
-import { PluginManager } from '@fromcode/core';
+import { PluginManager } from '@fromcode119/core';
 import MarketplacePlugins from './collections/marketplace-plugins';
 import MarketplaceThemes from './collections/marketplace-themes';
 import * as path from 'path';

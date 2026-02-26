@@ -1,5 +1,5 @@
 {
-  "name": "@fromcode/marketplace-hub",
+  "name": "@fromcode119/marketplace-hub",
   "version": "1.0.0",
   "description": "Custom registry and developer portal for the Fromcode ecosystem",
   "main": "dist/index.js",
@@ -9,11 +9,11 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@fromcode/core": "*",
-    "@fromcode/database": "*",
-    "@fromcode/api": "*",
-    "@fromcode/auth": "*",
-    "@fromcode/sdk": "*",
+    "@fromcode119/core": "*",
+    "@fromcode119/database": "*",
+    "@fromcode119/api": "*",
+    "@fromcode119/auth": "*",
+    "@fromcode119/sdk": "*",
     "dotenv": "^16.4.7",
     "express": "^4.18.2",
     "cors": "^2.8.5"

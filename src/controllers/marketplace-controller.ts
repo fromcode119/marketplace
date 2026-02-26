@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PluginManager } from '@fromcode/core';
+import { PluginManager } from '@fromcode119/core';
 import MarketplacePlugins from '../collections/marketplace-plugins';
 import MarketplaceThemes from '../collections/marketplace-themes';
 import MarketplaceCore from '../collections/marketplace-core';

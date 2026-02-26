@@ -1,7 +1,7 @@
 import express from 'express';
-import { PluginManager, Logger } from '@fromcode/core';
-import { AuthManager } from '@fromcode/auth';
-import { APIServer } from '@fromcode/api';
+import { PluginManager, Logger } from '@fromcode119/core';
+import { AuthManager } from '@fromcode119/auth';
+import { APIServer } from '@fromcode119/api';
 import MarketplacePlugins from './collections/marketplace-plugins';
 import MarketplaceThemes from './collections/marketplace-themes';
 import MarketplaceCore from './collections/marketplace-core';

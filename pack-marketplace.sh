@@ -132,11 +132,11 @@ if [ -d "$CORE_SOURCE_DIR" ]; then
 
         # Link built packages so the sync script can find them
         mkdir -p node_modules/@fromcode
-        ln -sf "$CORE_SOURCE_DIR/packages/core" node_modules/@fromcode/core
-        ln -sf "$CORE_SOURCE_DIR/packages/database" node_modules/@fromcode/database
-        ln -sf "$CORE_SOURCE_DIR/packages/api" node_modules/@fromcode/api
-        ln -sf "$CORE_SOURCE_DIR/packages/auth" node_modules/@fromcode/auth
-        ln -sf "$CORE_SOURCE_DIR/packages/sdk" node_modules/@fromcode/sdk
+        ln -sf "$CORE_SOURCE_DIR/packages/core" node_modules/@fromcode119/core
+        ln -sf "$CORE_SOURCE_DIR/packages/database" node_modules/@fromcode119/database
+        ln -sf "$CORE_SOURCE_DIR/packages/api" node_modules/@fromcode119/api
+        ln -sf "$CORE_SOURCE_DIR/packages/auth" node_modules/@fromcode119/auth
+        ln -sf "$CORE_SOURCE_DIR/packages/sdk" node_modules/@fromcode119/sdk
     fi
 fi
 

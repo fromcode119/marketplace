@@ -1,5 +1,5 @@
 import express from 'express';
-import { PluginManager } from '@fromcode/core';
+import { PluginManager } from '@fromcode119/core';
 import { MarketplaceController } from '../controllers/marketplace-controller';
 
 export function setupMarketplaceRoutes(manager: PluginManager) {
