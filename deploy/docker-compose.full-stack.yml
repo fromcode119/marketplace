@@ -5,17 +5,23 @@
 # On Coolify, do not publish host ports for the gateway. Let the Coolify proxy
 # attach over the external network instead.
 
+x-marketplace-image: &marketplace-image ${COOLIFY_RESOURCE_UUID:-marketplace-hub}:latest
+
+x-marketplace-build: &marketplace-build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
+    - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
+    - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+    - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
+    - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+
 services:
   gateway:
+    image: *marketplace-image
     build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
-        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
-        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
-        - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
-        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+      <<: *marketplace-build
     command: ["node", "deploy/gateway/single-domain-gateway.js"]
     depends_on:
       - api
@@ -43,15 +49,9 @@ services:
           memory: 128M
 
   api:
+    image: *marketplace-image
     build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
-        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
-        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
-        - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
-        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+      <<: *marketplace-build
     command: ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js"]
     environment:
       - DATABASE_URL=${DATABASE_URL:-/app/marketplace/data/marketplace.db}
@@ -82,15 +82,9 @@ services:
           memory: 768M
 
   admin:
+    image: *marketplace-image
     build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
-        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
-        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
-        - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
-        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+      <<: *marketplace-build
     command: ["sh", "-lc", "ADMIN_PORT=3001 node /app/marketplace/node_modules/@fromcode119/admin/scripts/admin.js"]
     environment:
       - NODE_ENV=production
