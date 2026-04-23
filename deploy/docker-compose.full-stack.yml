@@ -1,0 +1,120 @@
+# Docker Compose for Marketplace Hub on Coolify.
+# Usage: docker compose -f deploy/docker-compose.full-stack.yml up
+# Paths are relative to this deploy/ directory.
+# The shared build-server plugin is mounted from the workspace-level plugins folder.
+
+services:
+  gateway:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
+        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
+        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+        - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
+        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    command: ["node", "deploy/gateway/single-domain-gateway.js"]
+    depends_on:
+      - api
+      - admin
+    environment:
+      - API_TARGET=http://api:4000
+      - ADMIN_TARGET=http://admin:3001
+      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-${MARKETPLACE_URL:-http://marketplace.fromcode.com}/admin}
+      - ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+      - NODE_ENV=production
+    ports:
+      - ${GATEWAY_PORT:-80}:80
+    volumes:
+      - ../packages:/app/marketplace/packages:ro
+      - ./gateway/single-domain-gateway.js:/app/marketplace/deploy/gateway/single-domain-gateway.js:ro
+    networks:
+      - marketplace
+      - proxy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
+        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
+        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+        - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
+        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    command: ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-/app/marketplace/data/marketplace.db}
+      - NODE_ENV=production
+      - CORS_ALLOWED_DOMAINS=${CORS_ALLOWED_DOMAINS:-marketplace.fromcode.com}
+      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-${MARKETPLACE_URL:-http://marketplace.fromcode.com}/admin}
+      - FRONTEND_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
+      - ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - AUTO_BUILD_INTERVAL_MINUTES=${AUTO_BUILD_INTERVAL_MINUTES:-0}
+    volumes:
+      - marketplace_data:/app/marketplace/data
+      - build_cache:/app/marketplace/source
+      - ../plugins:/app/marketplace/plugins
+      - ../themes:/app/marketplace/themes
+      - ../uploads:/app/marketplace/uploads
+      - ../dist:/app/marketplace/dist
+      - ../packages:/app/marketplace/packages:ro
+    networks:
+      - marketplace
+      - proxy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  admin:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
+        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
+        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+        - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
+        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    command: ["sh", "-lc", "ADMIN_PORT=3001 node /app/marketplace/node_modules/@fromcode119/admin/scripts/admin.js"]
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-${MARKETPLACE_URL:-http://marketplace.fromcode.com}/admin}
+      - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
+      - ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    volumes:
+      - ../packages:/app/marketplace/packages:ro
+    networks:
+      - marketplace
+      - proxy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  marketplace:
+  proxy:
+    name: ${EXTERNAL_PROXY_NETWORK:-${COOLIFY_RESOURCE_UUID:-coolify}}
+    external: true
+
+volumes:
+  marketplace_data:
+  build_cache:

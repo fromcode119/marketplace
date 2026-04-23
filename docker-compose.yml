@@ -1,51 +1,121 @@
 # Marketplace Hub - Independent docker-compose
+# Uses a distinct project name to avoid conflicts with the main framework compose
+name: marketplace
+
+x-marketplace-build: &marketplace-build
+  context: .
+  dockerfile: Dockerfile
+
 services:
-  marketplace-db:
-    image: postgres:15-alpine
+  gateway:
+    build:
+      <<: *marketplace-build
+      args:
+        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
+        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
+        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+        - NEXT_PUBLIC_API_URL=http://marketplace.framework.local
+        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    command: [ "node", "deploy/gateway/single-domain-gateway.js" ]
     env_file: .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-fromcode}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marketplace_password}
-      POSTGRES_DB: ${POSTGRES_DB:-fromcode_marketplace}
-    volumes:
-      - marketplace_postgres_data:/var/lib/postgresql/data
-    networks:
-      - marketplace
-    restart: unless-stopped
-
-  marketplace-redis:
-    image: redis:7-alpine
-    networks:
-      - marketplace
-    restart: unless-stopped
-
-  marketplace:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - GITHUB_TOKEN=${GITHUB_TOKEN}
-    env_file: .env
+      - API_TARGET=http://api:4000
+      - ADMIN_TARGET=http://admin:3001
+      - ADMIN_URL=http://marketplace.framework.local/admin
+      - ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+      - NODE_ENV=production
     depends_on:
-      - marketplace-db
-      - marketplace-redis
+      - api
+      - admin
     volumes:
+      - ./packages:/app/marketplace/packages:ro
+      - ./deploy/gateway/single-domain-gateway.js:/app/marketplace/deploy/gateway/single-domain-gateway.js:ro
+    networks:
+      - marketplace-internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.fc-marketplace-gw.rule=Host(`marketplace.framework.local`)"
+      - "traefik.http.routers.fc-marketplace-gw.entrypoints=web"
+      - "traefik.http.routers.fc-marketplace-gw.tls=false"
+      - "traefik.http.services.fc-marketplace-gw.loadbalancer.server.port=80"
+    restart: unless-stopped
+
+  api:
+    build:
+      <<: *marketplace-build
+      args:
+        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
+        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
+        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+        - NEXT_PUBLIC_API_URL=http://marketplace.framework.local
+        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    command: [ "sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js" ]
+    # command: [ "sleep", "infinity" ]
+    env_file: .env
+#    healthcheck:
+#      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:4000/api/v1/health"]
+#      interval: 60s
+#      timeout: 15s
+#      retries: 5
+#      start_period: 120s
+    environment:
+      - NODE_ENV=production
+      - CORS_ALLOWED_DOMAINS=marketplace.framework.local,marketplace.fromcode.local
+      - ADMIN_URL=http://marketplace.framework.local/admin
+      - FRONTEND_URL=http://marketplace.framework.local
+      - ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - AUTO_BUILD_INTERVAL_MINUTES=${AUTO_BUILD_INTERVAL_MINUTES:-0}
+    volumes:
+      - marketplace_data:/app/marketplace/data
+      - build_cache:/app/marketplace/source
       - ./plugins:/app/marketplace/plugins
       - ./themes:/app/marketplace/themes
       - ./uploads:/app/marketplace/uploads
+      - ./dist:/app/marketplace/dist
+      - ./packages:/app/marketplace/packages:ro
     networks:
-      marketplace:
-      docker_web:
-        aliases:
-          - marketplace
-          - marketplace.framework.local
-          - marketplace.fromcode.local
+      - marketplace-internal
+    restart: unless-stopped
+
+  admin:
+    build:
+      <<: *marketplace-build
+      args:
+        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
+        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
+        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+        - NEXT_PUBLIC_API_URL=http://marketplace.framework.local
+        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    command: [ "sh", "-lc", "ADMIN_PORT=3001 node /app/marketplace/node_modules/@fromcode119/admin/scripts/admin.js" ]
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - ADMIN_URL=http://marketplace.framework.local/admin
+      - NEXT_PUBLIC_API_URL=http://marketplace.framework.local
+      - ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+      - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    env_file: .env
+    volumes:
+      - ./packages:/app/marketplace/packages:ro
+    networks:
+      - marketplace-internal
+    restart: unless-stopped
 
 networks:
-  marketplace:
-  docker_web:
+  marketplace-internal:
+  proxy:
     external: true
-    name: docker_web
+    name: proxy
+
 
 volumes:
-  marketplace_postgres_data:
+  marketplace_data:
+  build_cache:

@@ -6,8 +6,8 @@ _trash
 .npmrc
 *.tgz
 *.log
+.tsbuildinfo
 .git
 .gitignore
 .DS_Store
 uploads
-```

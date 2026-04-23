@@ -3,16 +3,19 @@ FROM node:22-alpine AS framework-builder
 # Install build dependencies
 RUN apk add --no-cache git python3 make g++
 
-# Allow passing a GitHub Token for private repository access
-ARG GITHUB_TOKEN
+ARG FRAMEWORK_REPO_URL=https://github.com/fromcode119/framework.git
+ARG FRAMEWORK_REF=main
+ARG NEXT_PUBLIC_ADMIN_AI_ENABLED=true
 
 WORKDIR /framework
-# Clone the framework
-RUN if [ -z "$GITHUB_TOKEN" ]; then \
-      git clone --depth 1 https://github.com/fromcode119/framework . ; \
+RUN if git ls-remote --exit-code --heads "$FRAMEWORK_REPO_URL" "$FRAMEWORK_REF" >/dev/null 2>&1 || \
+      git ls-remote --exit-code --tags "$FRAMEWORK_REPO_URL" "$FRAMEWORK_REF" >/dev/null 2>&1; then \
+      git clone --depth 1 --branch "$FRAMEWORK_REF" "$FRAMEWORK_REPO_URL" .; \
     else \
-      git clone --depth 1 https://$GITHUB_TOKEN@github.com/fromcode119/framework . ; \
+      git clone "$FRAMEWORK_REPO_URL" . && git checkout "$FRAMEWORK_REF"; \
     fi
+RUN find /framework -name '*.tsbuildinfo' -delete
+ENV NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED}
 
 # Clean any existing npm configs that might have expired tokens
 ENV NPM_CONFIG_USERCONFIG=/tmp/.npmrc
@@ -25,19 +28,26 @@ RUN rm -rf .npmrc ~/.npmrc /root/.npmrc && \
     npm config set audit false && \
     npm config set fund false
 
-# Fix missing dependencies and types in the cloned repo before building
-# (These fixes are no longer needed as they are present in the framework repo)
-
 # Move to the root of the cloned framework and build the core packages
 RUN npm install --loglevel error
-RUN npx tsc -b packages/core packages/api packages/database packages/auth packages/sdk packages/cache packages/email packages/media packages/scheduler packages/marketplace-client
+RUN npx tsc -b packages/core packages/api packages/database packages/auth packages/sdk packages/cache packages/email packages/media packages/scheduler packages/marketplace-client packages/mcp packages/plugins packages/ai
+RUN npm run build --workspace=@fromcode119/react || true
+RUN npm run build --workspace=@fromcode119/frontend || npm run build:frontend || true
+
+# Build admin Next.js here in framework-builder where monorepo siblings (../core/src, ../sdk/src etc.)
+# are available for webpack alias resolution. Must use --webpack since Turbopack fails in this context.
+ARG NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_ADMIN_BASE_PATH=${NEXT_PUBLIC_ADMIN_BASE_PATH}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+RUN cd packages/admin && npx next build --webpack
 
 # Pack the built packages into .tgz files
 RUN mkdir /framework/dist-packages && \
-    for pkg in core api database auth sdk cache email media scheduler marketplace-client; do \
+    for pkg in core api database auth sdk cache email media scheduler marketplace-client react frontend admin mcp plugins ai next cli; do \
       cd /framework/packages/$pkg && \
       npm pack && \
-      mv fromcode-$pkg-*.tgz /framework/dist-packages/; \
+      mv *.tgz /framework/dist-packages/; \
     done
 
 # Stage 2: Builder
@@ -66,12 +76,34 @@ RUN rm -rf .npmrc ~/.npmrc /root/.npmrc && \
 # Install the packed framework packages and other dependencies
 # We use --no-package-lock to avoid stale registry references
 RUN npm install /app/dist-packages/*.tgz --no-audit --no-package-lock --loglevel error
+RUN npm install http-proxy --save --no-audit --loglevel error
 RUN npm install --no-audit --no-package-lock --loglevel error
 
-RUN npm run build
+# Restore workspace config — admin's next.config.js requires('../../config/next-config-env')
+# From node_modules/@fromcode119/admin, ../../config = node_modules/config
+COPY --from=framework-builder /framework/config /app/marketplace/node_modules/config
+
+# Copy the built .next directory and public assets — npm pack excludes .next because of the root .gitignore
+# but next start needs both to serve the admin portal efficiently.
+COPY --from=framework-builder /framework/packages/admin/.next /app/marketplace/node_modules/@fromcode119/admin/.next
+COPY --from=framework-builder /framework/packages/admin/public /app/marketplace/node_modules/@fromcode119/admin/public
+
+# Configure runtime env values used by the framework API and admin packages.
+ARG NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_ADMIN_AI_ENABLED=true
+ENV NEXT_PUBLIC_ADMIN_BASE_PATH=${NEXT_PUBLIC_ADMIN_BASE_PATH}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED}
 
 # --- Runtime ---
 FROM node:22-alpine
+
+# git is required at runtime for the auto-builder to clone/pull plugin/theme repos
+RUN apk add --no-cache git
+
+# Coolify optimizations
+LABEL coolify.managed="true"
 
 WORKDIR /app
 
@@ -80,6 +112,19 @@ COPY --from=builder /app/marketplace /app/marketplace
 
 WORKDIR /app/marketplace
 
+ARG NEXT_PUBLIC_ADMIN_AI_ENABLED=true
+ENV NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED}
+
+# Create a dummy packages directory to satisfy the framework's discovery logic
+RUN mkdir -p packages
+
 EXPOSE 80
 
-CMD ["npm", "start"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/ || exit 1
+
+# Expose Admin GUI port alongside the API port
+EXPOSE 80 4000 3001
+
+# Boot the backend Express app, Next.js Admin portal, and the unified port 80 gateway concurrently
+CMD ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node /app/marketplace/node_modules/@fromcode119/api/dist/bin.js & ADMIN_PORT=3001 node /app/marketplace/node_modules/@fromcode119/admin/scripts/admin.js & node deploy/gateway/single-domain-gateway.js"]
