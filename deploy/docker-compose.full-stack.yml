@@ -21,7 +21,7 @@ services:
     environment:
       - API_TARGET=http://api:4000
       - ADMIN_TARGET=http://admin:3001
-      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-${MARKETPLACE_URL:-http://marketplace.fromcode.com}/admin}
+      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-http://marketplace.fromcode.com/admin}
       - ADMIN_BASE_PATH=/admin
       - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
       - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
@@ -55,7 +55,7 @@ services:
       - DATABASE_URL=${DATABASE_URL:-/app/marketplace/data/marketplace.db}
       - NODE_ENV=production
       - CORS_ALLOWED_DOMAINS=${CORS_ALLOWED_DOMAINS:-marketplace.fromcode.com}
-      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-${MARKETPLACE_URL:-http://marketplace.fromcode.com}/admin}
+      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-http://marketplace.fromcode.com/admin}
       - FRONTEND_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
       - ADMIN_BASE_PATH=/admin
       - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
@@ -93,7 +93,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-${MARKETPLACE_URL:-http://marketplace.fromcode.com}/admin}
+      - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-http://marketplace.fromcode.com/admin}
       - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
       - ADMIN_BASE_PATH=/admin
       - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
@@ -112,7 +112,7 @@ services:
 networks:
   marketplace:
   proxy:
-    name: ${EXTERNAL_PROXY_NETWORK:-${COOLIFY_RESOURCE_UUID:-coolify}}
+    name: ${EXTERNAL_PROXY_NETWORK:-coolify}
     external: true
 
 volumes:
