@@ -7,14 +7,7 @@ const httpProxy = require('http-proxy');
 const apiTarget = process.env.API_TARGET || 'http://127.0.0.1:4000';
 const adminTarget = process.env.ADMIN_TARGET || 'http://127.0.0.1:3001';
 const port = Number(process.env.GATEWAY_PORT || process.env.PORT || 80);
-
-let RequestSurfaceUtils;
-try {
-  ({ RequestSurfaceUtils } = require('@fromcode119/core'));
-} catch {
-  console.warn('[single-domain-gateway] @fromcode119/core not found; routing all traffic to API target.');
-  RequestSurfaceUtils = null;
-}
+const adminBasePath = resolveAdminBasePath(process.env.ADMIN_BASE_PATH, process.env.ADMIN_URL);
 
 const proxy = httpProxy.createProxyServer({ ws: true });
 
@@ -26,8 +19,58 @@ proxy.on('error', (error, _req, res) => {
   }
 });
 
-const isAdminPath = (pathname) => RequestSurfaceUtils ? RequestSurfaceUtils.isAdminPath(pathname) : false;
 const isApiPath = (pathname) => RequestSurfaceUtils ? RequestSurfaceUtils.isApiPath(pathname) : pathname.startsWith('/api');
+const isAdminPath = (pathname) => hasPathPrefix(normalizePathname(pathname), adminBasePath);
+
+let RequestSurfaceUtils;
+try {
+  ({ RequestSurfaceUtils } = require('@fromcode119/core'));
+} catch {
+  console.warn('[single-domain-gateway] @fromcode119/core not found; using local path detection.');
+  RequestSurfaceUtils = null;
+}
+
+function normalizePathname(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '/';
+  try {
+    const parsed = new URL(raw, 'http://placeholder.local');
+    const pathname = String(parsed.pathname || '/').trim();
+    if (!pathname) return '/';
+    return pathname.startsWith('/') ? pathname : `/${pathname}`;
+  } catch {
+    return raw.startsWith('/') ? raw : `/${raw}`;
+  }
+}
+
+function normalizePathPrefix(value) {
+  const normalized = normalizePathname(value).replace(/\/+$/, '');
+  return normalized === '/' ? '/' : normalized;
+}
+
+function hasPathPrefix(pathname, prefix) {
+  const normalizedPath = normalizePathname(pathname);
+  const normalizedPrefix = normalizePathPrefix(prefix);
+  if (normalizedPrefix === '/') {
+    return normalizedPath.startsWith('/');
+  }
+  return normalizedPath === normalizedPrefix || normalizedPath.startsWith(`${normalizedPrefix}/`);
+}
+
+function resolveAdminBasePath(rawBasePath, rawAdminUrl) {
+  const configuredBasePath = normalizePathPrefix(rawBasePath || '');
+  if (configuredBasePath && configuredBasePath !== '/') {
+    return configuredBasePath;
+  }
+
+  try {
+    const parsed = new URL(String(rawAdminUrl || '').trim());
+    const derived = normalizePathPrefix(parsed.pathname || '/admin');
+    return derived === '/' ? '/admin' : derived;
+  } catch {
+    return '/admin';
+  }
+}
 
 class MarketplacePublicRouteMapper {
   static rewrite(url) {
@@ -177,4 +220,5 @@ server.listen(port, () => {
   if (RequestSurfaceUtils) {
     console.log(`[single-domain-gateway] Admin base path: ${RequestSurfaceUtils.ADMIN_BASE_PATH}`);
   }
+  console.log(`[single-domain-gateway] Local admin base path: ${adminBasePath}`);
 });
