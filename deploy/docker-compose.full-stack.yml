@@ -22,6 +22,9 @@ services:
       - NODE_ENV=production
     expose:
       - "80"
+    volumes:
+      - marketplace_plugins:/app/marketplace/plugins
+      - marketplace_themes:/app/marketplace/themes
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/api/v1/health"]
       interval: 30s
@@ -64,6 +67,8 @@ services:
       - AUTO_BUILD_INTERVAL_MINUTES=${AUTO_BUILD_INTERVAL_MINUTES:-0}
     volumes:
       - marketplace_data:/app/marketplace/data
+      - marketplace_plugins:/app/marketplace/plugins
+      - marketplace_themes:/app/marketplace/themes
       - build_cache:/app/marketplace/source
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:4000/api/v1/health"]
@@ -114,4 +119,6 @@ networks:
 
 volumes:
   marketplace_data:
+  marketplace_plugins:
+  marketplace_themes:
   build_cache:

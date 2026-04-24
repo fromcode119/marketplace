@@ -147,13 +147,11 @@ class MarketplaceStaticAssetResponder {
     try {
       stat = fs.statSync(filePath);
     } catch {
-      this.respondNotFound(res);
-      return true;
+      return false;
     }
 
     if (!stat.isFile()) {
-      this.respondNotFound(res);
-      return true;
+      return false;
     }
 
     const extension = path.extname(filePath).toLowerCase();
