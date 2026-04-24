@@ -44,7 +44,7 @@ services:
         - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
     command: ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js"]
     environment:
-      - DATABASE_URL=${DATABASE_URL:-/app/marketplace/data/marketplace.db}
+      - DATABASE_URL=${DATABASE_URL:-file:/app/marketplace/data/marketplace.db}
       - JWT_SECRET=${JWT_SECRET}
       - NODE_ENV=production
       - CORS_ALLOWED_DOMAINS=${CORS_ALLOWED_DOMAINS:-marketplace.fromcode.com}

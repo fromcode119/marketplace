@@ -259,6 +259,8 @@ Key values from `.env.example`:
 - `AUTO_BUILD_INTERVAL_MINUTES`
 - `GITHUB_TOKEN`
 
+For SQLite, use a URL-style path such as `file:./data/marketplace.db` locally or `file:/app/marketplace/data/marketplace.db` in containers.
+
 ## Integration With Framework
 
 Framework installations should point their marketplace client to the public marketplace URL, not to an internal admin endpoint.
