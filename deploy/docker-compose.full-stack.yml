@@ -45,6 +45,7 @@ services:
     command: ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js"]
     environment:
       - DATABASE_URL=${DATABASE_URL:-file:/app/marketplace/data/marketplace.db}
+      - DB_DIALECT=${DB_DIALECT:-sqlite}
       - JWT_SECRET=${JWT_SECRET}
       - NODE_ENV=production
       - CORS_ALLOWED_DOMAINS=${CORS_ALLOWED_DOMAINS:-marketplace.fromcode.com}
@@ -90,7 +91,7 @@ services:
 networks:
   marketplace:
   proxy:
-    name: ${EXTERNAL_PROXY_NETWORK:-${COOLIFY_RESOURCE_UUID:-coolify}}
+    name: ${EXTERNAL_PROXY_NETWORK:-coolify}
     external: true
 
 volumes:

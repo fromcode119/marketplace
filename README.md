@@ -195,6 +195,8 @@ The Coolify compose file joins the external proxy network with:
 EXTERNAL_PROXY_NETWORK=${COOLIFY proxy network name}
 ```
 
+If you do not set it explicitly, the marketplace deploy now defaults to `coolify`.
+
 If `EXTERNAL_PROXY_NETWORK` is wrong, the containers may start but Coolify routing will not attach correctly.
 
 ### 4. Typical production values
@@ -248,6 +250,7 @@ Key values from `.env.example`:
 - `NODE_ENV`
 - `MARKETPLACE_PORT`
 - `DATABASE_URL`
+- `DB_DIALECT`
 - `JWT_SECRET`
 - `MARKETPLACE_URL`
 - `MARKETPLACE_ADMIN_URL`
@@ -259,7 +262,7 @@ Key values from `.env.example`:
 - `AUTO_BUILD_INTERVAL_MINUTES`
 - `GITHUB_TOKEN`
 
-For SQLite, use a URL-style path such as `file:./data/marketplace.db` locally or `file:/app/marketplace/data/marketplace.db` in containers.
+For SQLite, use `DB_DIALECT=sqlite` together with a URL-style path such as `file:./data/marketplace.db` locally or `file:/app/marketplace/data/marketplace.db` in containers.
 
 ## Integration With Framework
 
