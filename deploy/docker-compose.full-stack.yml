@@ -45,6 +45,7 @@ services:
     command: ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js"]
     environment:
       - DATABASE_URL=${DATABASE_URL:-/app/marketplace/data/marketplace.db}
+      - JWT_SECRET=${JWT_SECRET}
       - NODE_ENV=production
       - CORS_ALLOWED_DOMAINS=${CORS_ALLOWED_DOMAINS:-marketplace.fromcode.com}
       - ADMIN_URL=${MARKETPLACE_ADMIN_URL:-http://marketplace.fromcode.com/admin}

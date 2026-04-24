@@ -62,14 +62,14 @@ cp .env.example .env
 
 At minimum, set:
 
-- `ADMIN_USER`
-- `ADMIN_PASS`
 - `JWT_SECRET`
 
 Optional but useful:
 
 - `GITHUB_TOKEN` for private plugin/theme source clones at runtime
 - `FRAMEWORK_REF` if you want to build against a tag or commit instead of `main`
+
+The first marketplace admin user is created through the setup flow on first run. `ADMIN_USER` and `ADMIN_PASS` are not required runtime variables for this repository.
 
 ### 2. Start the marketplace stack
 
@@ -173,8 +173,6 @@ At minimum, set:
 
 - `MARKETPLACE_URL`
 - `MARKETPLACE_ADMIN_URL`
-- `ADMIN_USER`
-- `ADMIN_PASS`
 - `JWT_SECRET`
 
 Recommended:
@@ -250,8 +248,6 @@ Key values from `.env.example`:
 - `NODE_ENV`
 - `MARKETPLACE_PORT`
 - `DATABASE_URL`
-- `ADMIN_USER`
-- `ADMIN_PASS`
 - `JWT_SECRET`
 - `MARKETPLACE_URL`
 - `MARKETPLACE_ADMIN_URL`
@@ -283,6 +279,7 @@ The framework then reads plugin and theme data from:
 - Do not commit tokens or token-bearing clone URLs
 - `GITHUB_TOKEN` is optional and only needed for private runtime clones
 - Use a strong `JWT_SECRET`
+- The first admin account is created from the setup screen, not from `ADMIN_USER` / `ADMIN_PASS`
 - Treat generated archives and build outputs as deploy artifacts, not secrets
 
 ## Current Architecture Notes
