@@ -8,12 +8,44 @@ const apiTarget = process.env.API_TARGET || 'http://127.0.0.1:4000';
 const adminTarget = process.env.ADMIN_TARGET || 'http://127.0.0.1:3001';
 const port = Number(process.env.GATEWAY_PORT || process.env.PORT || 80);
 const adminBasePath = resolveAdminBasePath(process.env.ADMIN_BASE_PATH, process.env.ADMIN_URL);
+const retryDelayMs = Number(process.env.GATEWAY_RETRY_DELAY_MS || 350);
+const retryableMethods = new Set(['GET', 'HEAD', 'OPTIONS']);
+const retryableErrorCodes = new Set(['ECONNREFUSED', 'ECONNRESET', 'EPIPE', 'ETIMEDOUT']);
 
 const proxy = httpProxy.createProxyServer({ ws: true });
 
-proxy.on('error', (error, _req, res) => {
-  console.error('[single-domain-gateway] Proxy error:', error.message);
-  if (res && 'writeHead' in res && typeof res.writeHead === 'function') {
+proxy.on('error', (error, req, res) => {
+  const method = String(req?.method || 'GET').toUpperCase();
+  const url = String(req?.url || '/');
+  const target = String(req?._proxyTarget || resolveTarget(url));
+  const attempt = Number(req?._proxyAttempt || 1);
+  const code = String(error?.code || '').trim() || 'UNKNOWN';
+  const message = String(error?.message || '').trim() || '(empty message)';
+  const syscall = String(error?.syscall || '').trim();
+  const address = String(error?.address || '').trim();
+  const errorPort = error?.port != null ? String(error.port) : '';
+
+  console.error(
+    `[single-domain-gateway] Proxy error method=${method} url=${url} target=${target} attempt=${attempt} code=${code} message=${message}` +
+      `${syscall ? ` syscall=${syscall}` : ''}` +
+      `${address ? ` address=${address}` : ''}` +
+      `${errorPort ? ` port=${errorPort}` : ''}`
+  );
+
+  if (shouldRetryProxyRequest(error, req, res)) {
+    req._proxyAttempt = attempt + 1;
+    console.warn(
+      `[single-domain-gateway] Retrying ${method} ${url} -> ${target} in ${retryDelayMs}ms (attempt ${req._proxyAttempt})`
+    );
+    setTimeout(() => {
+      if (!res.destroyed) {
+        proxy.web(req, res, { target });
+      }
+    }, retryDelayMs);
+    return;
+  }
+
+  if (res && 'writeHead' in res && typeof res.writeHead === 'function' && !res.headersSent) {
     res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Service unavailable - is the target process running?');
   }
@@ -70,6 +102,25 @@ function resolveAdminBasePath(rawBasePath, rawAdminUrl) {
   } catch {
     return '/admin';
   }
+}
+
+function shouldRetryProxyRequest(error, req, res) {
+  if (!req || !res || res.headersSent || res.destroyed) {
+    return false;
+  }
+
+  const method = String(req.method || 'GET').toUpperCase();
+  if (!retryableMethods.has(method)) {
+    return false;
+  }
+
+  const attempt = Number(req._proxyAttempt || 1);
+  if (attempt >= 2) {
+    return false;
+  }
+
+  const code = String(error?.code || '').trim().toUpperCase();
+  return retryableErrorCodes.has(code);
 }
 
 class MarketplacePublicRouteMapper {
@@ -197,6 +248,8 @@ const server = http.createServer((req, res) => {
     req.url = rewrittenUrl;
   }
   const target = resolveTarget(req.url);
+  req._proxyTarget = target;
+  req._proxyAttempt = 1;
   console.log(`[single-domain-gateway] ${req.method} ${req.url} -> ${target}`);
   proxy.web(req, res, { target });
 });
