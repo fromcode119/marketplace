@@ -32,7 +32,6 @@ RUN rm -rf .npmrc ~/.npmrc /root/.npmrc && \
 RUN npm install --loglevel error
 RUN npx tsc -b packages/core packages/api packages/database packages/auth packages/sdk packages/cache packages/email packages/media packages/scheduler packages/marketplace-client packages/mcp packages/plugins packages/ai
 RUN npm run build --workspace=@fromcode119/react || true
-RUN npm run build --workspace=@fromcode119/frontend || npm run build:frontend || true
 
 # Build admin Next.js here in framework-builder where monorepo siblings (../core/src, ../sdk/src etc.)
 # are available for webpack alias resolution. Must use --webpack since Turbopack fails in this context.
@@ -40,7 +39,7 @@ ARG NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_ADMIN_BASE_PATH=${NEXT_PUBLIC_ADMIN_BASE_PATH}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-RUN cd packages/admin && npx next build --webpack
+RUN cd packages/admin && NODE_OPTIONS=--max-old-space-size=1024 npx next build --webpack
 
 # Pack the built packages into .tgz files
 RUN mkdir /framework/dist-packages && \
