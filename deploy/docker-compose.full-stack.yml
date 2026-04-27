@@ -11,7 +11,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: gateway-only
       args:
         - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
         - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
@@ -31,6 +30,9 @@ services:
       - NODE_ENV=production
     expose:
       - "80"
+    labels:
+      - "traefik.http.routers.http-0-${COOLIFY_RESOURCE_UUID}-gateway.service=http-0-${COOLIFY_RESOURCE_UUID}-gateway"
+      - "traefik.http.services.http-0-${COOLIFY_RESOURCE_UUID}-gateway.loadbalancer.server.port=80"
     volumes:
       - marketplace_plugins:/app/marketplace/plugins
       - marketplace_themes:/app/marketplace/themes
