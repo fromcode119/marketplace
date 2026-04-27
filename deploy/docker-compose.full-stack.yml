@@ -38,7 +38,7 @@ services:
       # The gateway is attached to both the public ingress network and the
       # private marketplace network. Pin Traefik to the ingress network so it
       # never picks the internal one and hangs public requests.
-      - "traefik.docker.network=${EXTERNAL_PROXY_NETWORK:-${COOLIFY_RESOURCE_UUID:-coolify}}"
+      - "traefik.docker.network=${COOLIFY_RESOURCE_UUID}"
     restart: unless-stopped
     deploy:
       resources:
@@ -117,7 +117,7 @@ services:
 networks:
   marketplace:
   proxy:
-    name: ${EXTERNAL_PROXY_NETWORK:-coolify}
+    name: ${COOLIFY_RESOURCE_UUID}
     external: true
 
 volumes:
