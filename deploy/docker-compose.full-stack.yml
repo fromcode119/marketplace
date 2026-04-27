@@ -57,7 +57,7 @@ services:
 
   api:
     image: ${COOLIFY_RESOURCE_UUID:-marketplace-hub}:latest
-    command: ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js"]
+    command: ["sh", "-lc", "mkdir -p /app/marketplace/data /app/marketplace/plugins /app/marketplace/themes /app/marketplace/source && PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js"]
     environment:
       - DATABASE_URL=${DATABASE_URL:-file:/app/marketplace/data/marketplace.db}
       - DB_DIALECT=${DB_DIALECT:-sqlite}
