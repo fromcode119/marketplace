@@ -7,6 +7,7 @@
 
 services:
   gateway:
+    image: ${COOLIFY_RESOURCE_UUID:-marketplace-hub}:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -49,16 +50,8 @@ services:
           memory: 128M
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: api-only
-      args:
-        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
-        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
-        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
-        - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
-        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    image: ${COOLIFY_RESOURCE_UUID:-marketplace-hub}:latest
+    command: ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node node_modules/@fromcode119/api/dist/bin.js"]
     environment:
       - DATABASE_URL=${DATABASE_URL:-file:/app/marketplace/data/marketplace.db}
       - DB_DIALECT=${DB_DIALECT:-sqlite}
@@ -92,16 +85,8 @@ services:
           memory: 768M
 
   admin:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: admin-only
-      args:
-        - FRAMEWORK_REPO_URL=${FRAMEWORK_REPO_URL:-https://github.com/fromcode119/framework.git}
-        - FRAMEWORK_REF=${FRAMEWORK_REF:-main}
-        - NEXT_PUBLIC_ADMIN_BASE_PATH=/admin
-        - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
-        - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
+    image: ${COOLIFY_RESOURCE_UUID:-marketplace-hub}:latest
+    command: ["sh", "-lc", "ADMIN_PORT=3001 node /app/marketplace/node_modules/@fromcode119/admin/scripts/admin.js"]
     environment:
       - NODE_ENV=production
       - PORT=3001
