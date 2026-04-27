@@ -31,8 +31,12 @@ services:
     expose:
       - "80"
     labels:
-      - "traefik.http.routers.http-0-${COOLIFY_RESOURCE_UUID}-gateway.service=http-0-${COOLIFY_RESOURCE_UUID}-gateway"
-      - "traefik.http.services.http-0-${COOLIFY_RESOURCE_UUID}-gateway.loadbalancer.server.port=80"
+      - "traefik.http.routers.marketplace-http.entryPoints=http"
+      - "traefik.http.routers.marketplace-http.rule=Host(`${SERVICE_FQDN_GATEWAY}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.marketplace-http.middlewares=gzip"
+      - "traefik.http.routers.marketplace-http.priority=1000"
+      - "traefik.http.routers.marketplace-http.service=marketplace-gateway"
+      - "traefik.http.services.marketplace-gateway.loadbalancer.server.port=80"
     volumes:
       - marketplace_plugins:/app/marketplace/plugins
       - marketplace_themes:/app/marketplace/themes
