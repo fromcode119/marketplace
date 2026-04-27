@@ -96,8 +96,8 @@ ENV NEXT_PUBLIC_ADMIN_BASE_PATH=${NEXT_PUBLIC_ADMIN_BASE_PATH}
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED}
 
-# --- Runtime base ---
-FROM node:22-alpine AS runtime-base
+# --- Runtime ---
+FROM node:22-alpine
 
 # git is required at runtime for the auto-builder to clone/pull plugin/theme repos
 RUN apk add --no-cache git
@@ -118,25 +118,9 @@ ENV NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED}
 # Create a dummy packages directory to satisfy the framework's discovery logic
 RUN mkdir -p packages
 
-FROM runtime-base AS gateway-only
-EXPOSE 80
-CMD ["node", "deploy/gateway/single-domain-gateway.js"]
-
-FROM runtime-base AS api-only
-EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/api/v1/health || exit 1
-CMD ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node /app/marketplace/node_modules/@fromcode119/api/dist/bin.js"]
-
-FROM runtime-base AS admin-only
-EXPOSE 3001
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3001/admin/login || exit 1
-CMD ["sh", "-lc", "ADMIN_PORT=3001 node /app/marketplace/node_modules/@fromcode119/admin/scripts/admin.js"]
-
-FROM runtime-base
 
 EXPOSE 80 4000 3001
 
-# Legacy all-in-one runtime target kept for backwards compatibility.
 CMD ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node /app/marketplace/node_modules/@fromcode119/api/dist/bin.js & ADMIN_PORT=3001 node /app/marketplace/node_modules/@fromcode119/admin/scripts/admin.js & node deploy/gateway/single-domain-gateway.js"]
