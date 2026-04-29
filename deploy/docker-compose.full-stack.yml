@@ -30,6 +30,8 @@ services:
       - NODE_ENV=production
     expose:
       - "80"
+    labels:
+      - "traefik.docker.network=${COOLIFY_RESOURCE_UUID}"
     volumes:
       - marketplace_plugins:/app/marketplace/plugins
       - marketplace_themes:/app/marketplace/themes
