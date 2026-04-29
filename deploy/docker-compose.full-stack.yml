@@ -30,9 +30,6 @@ services:
       - NODE_ENV=production
     expose:
       - "80"
-    labels:
-      - "traefik.http.routers.http-0-${COOLIFY_RESOURCE_UUID}-gateway.service=marketplace-gateway"
-      - "traefik.http.services.marketplace-gateway.loadbalancer.server.port=80"
     volumes:
       - marketplace_plugins:/app/marketplace/plugins
       - marketplace_themes:/app/marketplace/themes

@@ -120,6 +120,6 @@ RUN mkdir -p packages
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:4000/api/v1/health || exit 1
 
-EXPOSE 80 4000 3001
+EXPOSE 80
 
 CMD ["sh", "-lc", "PORT=${MARKETPLACE_PORT:-4000} node /app/marketplace/node_modules/@fromcode119/api/dist/bin.js & ADMIN_PORT=3001 node /app/marketplace/node_modules/@fromcode119/admin/scripts/admin.js & node deploy/gateway/single-domain-gateway.js"]
