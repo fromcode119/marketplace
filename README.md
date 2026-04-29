@@ -67,7 +67,10 @@ At minimum, set:
 Optional but useful:
 
 - `GITHUB_TOKEN` for private plugin/theme source clones at runtime
+- `BUILD_SERVER_SECRET_KEY` for encrypting and decrypting stored build source tokens
 - `FRAMEWORK_REF` if you want to build against a tag or commit instead of `main`
+
+If you use private source repositories in the build-server flow, set `BUILD_SERVER_SECRET_KEY` before saving any Git tokens in the admin. Keep this key stable across redeploys, or previously stored encrypted tokens will no longer decrypt.
 
 The first marketplace admin user is created through the setup flow on first run. `ADMIN_USER` and `ADMIN_PASS` are not required runtime variables for this repository.
 
@@ -174,6 +177,7 @@ At minimum, set:
 - `MARKETPLACE_URL`
 - `MARKETPLACE_ADMIN_URL`
 - `JWT_SECRET`
+- `BUILD_SERVER_SECRET_KEY`
 
 Recommended:
 
@@ -186,6 +190,8 @@ Optional:
 
 - `GITHUB_TOKEN`
 - `AUTO_BUILD_INTERVAL_MINUTES`
+
+`BUILD_SERVER_SECRET_KEY` must stay stable for this marketplace instance. It is used to encrypt stored build source tokens for the build-server plugin. If you change it later, previously saved encrypted Git tokens must be re-entered in the admin.
 
 ### 3. Proxy network notes
 
@@ -206,6 +212,7 @@ MARKETPLACE_URL=https://marketplace.fromcode.com
 MARKETPLACE_ADMIN_URL=https://marketplace.fromcode.com/admin
 CORS_ALLOWED_DOMAINS=marketplace.fromcode.com
 NEXT_PUBLIC_ADMIN_AI_ENABLED=false
+BUILD_SERVER_SECRET_KEY=replace-with-a-long-random-stable-secret
 FRAMEWORK_REPO_URL=https://github.com/fromcode119/framework.git
 FRAMEWORK_REF=main
 ```
