@@ -18,8 +18,11 @@ services:
         - NEXT_PUBLIC_API_URL=${MARKETPLACE_URL:-http://marketplace.fromcode.com}
         - NEXT_PUBLIC_ADMIN_AI_ENABLED=${NEXT_PUBLIC_ADMIN_AI_ENABLED:-false}
     depends_on:
-      - api
-      - admin
+      api:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+    command: ["node", "deploy/gateway/single-domain-gateway.js"]
     environment:
       - API_TARGET=http://api:4000
       - ADMIN_TARGET=http://admin:3001
