@@ -1,6 +1,6 @@
 {
   "name": "@fromcode119/marketplace-hub",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "description": "Custom marketplace and developer portal for the Fromcode ecosystem",
   "main": "node_modules/@fromcode119/api/dist/index.js",
   "repository": {
